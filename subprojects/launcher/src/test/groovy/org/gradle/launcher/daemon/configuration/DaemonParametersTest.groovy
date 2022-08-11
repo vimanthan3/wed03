@@ -18,6 +18,7 @@ package org.gradle.launcher.daemon.configuration
 import org.gradle.api.JavaVersion
 import org.gradle.api.internal.file.TestFiles
 import org.gradle.internal.jvm.JavaInfo
+import org.gradle.internal.jvm.JpmsConfiguration
 import org.gradle.internal.jvm.Jvm
 import org.gradle.launcher.configuration.BuildLayoutResult
 import spock.lang.Issue
@@ -58,39 +59,55 @@ class DaemonParametersTest extends Specification {
         parameters.effectiveJvm == Jvm.current()
     }
 
-    def "configuring jvmargs replaces the defaults"() {
+    def "can apply defaults for Java 8"() {
         when:
-        parameters.setJvmArgs(["-Xmx17m"])
-
-        then:
-        parameters.effectiveJvmArgs.intersect(parameters.DEFAULT_JVM_ARGS).empty
-    }
-
-    def "does not apply defaults when jvmargs already specified"() {
-        when:
-        parameters.setJvmArgs(["-Xmx17m"])
         parameters.applyDefaultsFor(JavaVersion.VERSION_1_8)
 
         then:
-        parameters.effectiveJvmArgs.containsAll(["-Xmx17m"])
-        parameters.effectiveJvmArgs.intersect(parameters.DEFAULT_JVM_ARGS).empty
+        parameters.effectiveJvmArgs.containsAll("-Xmx512m", "-Xms256m", "-XX:MaxMetaspaceSize=256m", "-XX:+HeapDumpOnOutOfMemoryError")
+        !parameters.effectiveJvmArgs.contains("--add-opens")
     }
 
-    def "can apply defaults for Java 7 and earlier"() {
-        when:
-        parameters.applyDefaultsFor(JavaVersion.VERSION_1_7)
-
-        then:
-        parameters.effectiveJvmArgs.containsAll(DaemonParameters.DEFAULT_JVM_ARGS)
-    }
-
-    def "can apply defaults for Java 8 and later"() {
+    def "can apply defaults for Java 9 and later"() {
         when:
         parameters.applyDefaultsFor(JavaVersion.VERSION_1_9)
 
         then:
-        parameters.effectiveJvmArgs.containsAll(DaemonParameters.DEFAULT_JVM_8_ARGS)
-        !parameters.effectiveJvmArgs.containsAll(DaemonParameters.DEFAULT_JVM_ARGS)
+        parameters.effectiveJvmArgs.containsAll("-Xmx512m", "-Xms256m", "-XX:MaxMetaspaceSize=256m", "-XX:+HeapDumpOnOutOfMemoryError")
+        assertContainsJPMSDefaults(parameters.effectiveJvmArgs)
+    }
+
+    def "can provide jvmargs which are added to defaults"() {
+        when:
+        parameters.setJvmArgs(["-XX:+UseG1GC"])
+        parameters.applyDefaultsFor(JavaVersion.VERSION_1_9)
+
+        then:
+        parameters.effectiveJvmArgs.containsAll(["-XX:+UseG1GC", "-Xmx512m", "-Xms256m", "-XX:MaxMetaspaceSize=256m", "-XX:+HeapDumpOnOutOfMemoryError"])
+        assertContainsJPMSDefaults(parameters.effectiveJvmArgs)
+    }
+
+    private void assertContainsJPMSDefaults(def jvmArgs) {
+        assert Collections.indexOfSubList(jvmArgs, ["--add-opens=java.base/java.util=ALL-UNNAMED"]) >= 0
+        assert Collections.indexOfSubList(jvmArgs, JpmsConfiguration.GRADLE_DAEMON_JPMS_ARGS) >= 0
+    }
+
+    def "can provide jvmargs to override defaults"() {
+        when:
+        parameters.setJvmArgs(["-Xmx1111m", "-Xms555m", "-XX:MaxMetaspaceSize=222m"])
+        parameters.applyDefaultsFor(JavaVersion.VERSION_1_8)
+
+        then:
+        parameters.effectiveJvmArgs.containsAll(["-Xmx1111m", "-Xms555m", "-XX:MaxMetaspaceSize=222m", "-XX:+HeapDumpOnOutOfMemoryError"])
+    }
+
+    def "jvmargs that duplicate defaults are ignored"() {
+        when:
+        parameters.setJvmArgs(["-Xmx512m", "-Xms256m", "-XX:MaxMetaspaceSize=256m", "-XX:+HeapDumpOnOutOfMemoryError"])
+        parameters.applyDefaultsFor(JavaVersion.VERSION_1_8)
+
+        then:
+        parameters.effectiveJvmArgs.containsAll(["-Xmx512m", "-Xms256m", "-XX:MaxMetaspaceSize=256m", "-XX:+HeapDumpOnOutOfMemoryError"])
     }
 
     @Issue("20611")
