@@ -47,36 +47,36 @@ class GroovyRuntimeTest extends AbstractProjectBuilderSpec {
         when:
         def classpath = project.groovyRuntime.inferGroovyClasspath([
             project.file("other.jar"),
-            project.file("groovy-${groovyVersion}.jar"),
-            project.file("groovy-ant-${groovyVersion}.jar"),
-            project.file("groovy-astbuilder-${groovyVersion}.jar"),
-            project.file("groovy-console-${groovyVersion}.jar"),
-            project.file("groovy-datetime-${groovyVersion}.jar"),
-            project.file("groovy-dateutil-${groovyVersion}.jar"),
-            project.file("groovy-templates-${groovyVersion}.jar"),
-            project.file("groovy-json-${groovyVersion}.jar"),
-            project.file("groovy-xml-${groovyVersion}.jar"),
-            project.file("groovy-groovydoc-${groovyVersion}.jar"),
-            project.file("groovy-nio-${groovyVersion}.jar"),
-            project.file("groovy-sql-${groovyVersion}.jar"),
-            project.file("groovy-test-${groovyVersion}.jar")
+            project.file("groovy-${groovyVersion}-indy.jar"),
+            project.file("groovy-ant-${groovyVersion}-indy.jar"),
+            project.file("groovy-astbuilder-${groovyVersion}-indy.jar"),
+            project.file("groovy-console-${groovyVersion}-indy.jar"),
+            project.file("groovy-datetime-${groovyVersion}-indy.jar"),
+            project.file("groovy-dateutil-${groovyVersion}-indy.jar"),
+            project.file("groovy-templates-${groovyVersion}-indy.jar"),
+            project.file("groovy-json-${groovyVersion}-indy.jar"),
+            project.file("groovy-xml-${groovyVersion}-indy.jar"),
+            project.file("groovy-groovydoc-${groovyVersion}-indy.jar"),
+            project.file("groovy-nio-${groovyVersion}-indy.jar"),
+            project.file("groovy-sql-${groovyVersion}-indy.jar"),
+            project.file("groovy-test-${groovyVersion}-indy.jar")
         ])
 
         then:
         classpath.files.size() == 13
-        classpath.files.contains(project.file("groovy-${groovyVersion}.jar"))
-        classpath.files.contains(project.file("groovy-ant-${groovyVersion}.jar"))
-        classpath.files.contains(project.file("groovy-astbuilder-${groovyVersion}.jar"))
-        classpath.files.contains(project.file("groovy-console-${groovyVersion}.jar"))
-        classpath.files.contains(project.file("groovy-datetime-${groovyVersion}.jar"))
-        classpath.files.contains(project.file("groovy-dateutil-${groovyVersion}.jar"))
-        classpath.files.contains(project.file("groovy-templates-${groovyVersion}.jar"))
-        classpath.files.contains(project.file("groovy-json-${groovyVersion}.jar"))
-        classpath.files.contains(project.file("groovy-xml-${groovyVersion}.jar"))
-        classpath.files.contains(project.file("groovy-groovydoc-${groovyVersion}.jar"))
-        classpath.files.contains(project.file("groovy-nio-${groovyVersion}.jar"))
-        classpath.files.contains(project.file("groovy-sql-${groovyVersion}.jar"))
-        classpath.files.contains(project.file("groovy-test-${groovyVersion}.jar"))
+        classpath.files.contains(project.file("groovy-${groovyVersion}-indy.jar"))
+        classpath.files.contains(project.file("groovy-ant-${groovyVersion}-indy.jar"))
+        classpath.files.contains(project.file("groovy-astbuilder-${groovyVersion}-indy.jar"))
+        classpath.files.contains(project.file("groovy-console-${groovyVersion}-indy.jar"))
+        classpath.files.contains(project.file("groovy-datetime-${groovyVersion}-indy.jar"))
+        classpath.files.contains(project.file("groovy-dateutil-${groovyVersion}-indy.jar"))
+        classpath.files.contains(project.file("groovy-templates-${groovyVersion}-indy.jar"))
+        classpath.files.contains(project.file("groovy-json-${groovyVersion}-indy.jar"))
+        classpath.files.contains(project.file("groovy-xml-${groovyVersion}-indy.jar"))
+        classpath.files.contains(project.file("groovy-groovydoc-${groovyVersion}-indy.jar"))
+        classpath.files.contains(project.file("groovy-nio-${groovyVersion}-indy.jar"))
+        classpath.files.contains(project.file("groovy-sql-${groovyVersion}-indy.jar"))
+        classpath.files.contains(project.file("groovy-test-${groovyVersion}-indy.jar"))
 
         where:
         groovyVersion << GroovyCoverage.SINCE_3_0
