@@ -17,7 +17,9 @@ package org.gradle.plugins.ide.eclipse
 
 import org.gradle.plugins.ide.AbstractSourcesAndJavadocJarsIntegrationTest
 import org.gradle.test.fixtures.server.http.HttpArtifact
+import spock.lang.Ignore
 
+@Ignore('IDE plugins need refactoring to use Groovy jars with indy classifier')
 class EclipseSourcesAndJavadocJarsIntegrationTest extends AbstractSourcesAndJavadocJarsIntegrationTest {
     @Override
     String getIdeTask() {
