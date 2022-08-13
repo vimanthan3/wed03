@@ -200,7 +200,7 @@ public class GroovyRuntime {
 
     private static Set<String> groovyJarNamesFor(VersionNumber groovyVersion) {
         return GROOVY_LIBS.stream()
-            .map(libName -> libName + "-" + groovyVersion + ".jar")
+            .map(libName -> libName + "-" + groovyVersion + "-indy.jar")
             .collect(toSet());
     }
 

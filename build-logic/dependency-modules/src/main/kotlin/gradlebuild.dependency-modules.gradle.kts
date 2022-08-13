@@ -23,6 +23,8 @@ import gradlebuild.modules.extension.ExternalModulesExtension
 val libs = extensions.create<ExternalModulesExtension>("libs")
 
 applyAutomaticUpgradeOfCapabilities()
+substituteGroovyIndy()
+
 dependencies {
     components {
         // Gradle distribution - minify: remove unused transitive dependencies
@@ -78,6 +80,31 @@ fun applyAutomaticUpgradeOfCapabilities() {
     configurations.all {
         resolutionStrategy.capabilitiesResolution.all {
             selectHighestVersion()
+        }
+    }
+}
+
+/**
+ * Creates a dependency substitution rule for each groovy module identified in [ExternalModulesExtension].
+ *
+ * Replaces the default jar with one having the "indy" classifier.
+ *
+ * This is only necessary for Groovy 3 and may be removed once we bundle Groovy 4, which is "indy" by default
+ * and has no special classifier.
+ */
+fun substituteGroovyIndy() {
+    configurations.all {
+        resolutionStrategy.dependencySubstitution {
+            listOf(libs.groovy, libs.groovyAnt, libs.groovyAstbuilder, libs.groovyConsole, libs.groovySql,
+                libs.groovyDatetime, libs.groovyDateUtil, libs.groovyNio, libs.groovyDoc,
+                libs.groovyJson, libs.groovyTemplates, libs.groovyTest, libs.groovyXml).forEach {
+                resolutionStrategy.dependencySubstitution {
+                    substitute(module(it))
+                        .using(module("$it:${libs.groovyVersion}"))
+                        .withClassifier("indy")
+                        .because("Selecting Groovy 3 runtime built with invokedynamic")
+                }
+            }
         }
     }
 }
