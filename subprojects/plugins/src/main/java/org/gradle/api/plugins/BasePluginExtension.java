@@ -21,8 +21,6 @@ import org.gradle.api.provider.Property;
 
 /**
  * An extension used for {@link BasePlugin}.
- * <p>
- * Replaces {@link BasePluginConvention}.
  *
  * @since 7.1
  */

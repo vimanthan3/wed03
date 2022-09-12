@@ -33,21 +33,21 @@ include::sample[dir="snippets/base/basePlugin/kotlin",files="build.gradle.kts[ta
 `clean` — `Delete`::
 Deletes the build directory and everything in it, i.e. the path specified by the link:{groovyDslPath}/org.gradle.api.Project.html#org.gradle.api.Project:buildDir[Project.getBuildDir()] project property.
 
-`check` — _lifecycle task_::
+`check` — _lifecycle task_::
 Plugins and build authors should attach their verification tasks, such as ones that run tests, to this lifecycle task using `check.dependsOn(__task__)`.
 
 `assemble` — _lifecycle task_::
 Plugins and build authors should attach tasks that produce distributions and other consumable artifacts to this lifecycle task. For example, `jar` produces the consumable artifact for Java libraries. Attach tasks to this lifecycle task using `assemble.dependsOn(__task__)`.
 
-`build` — _lifecycle task_::
+`build` — _lifecycle task_::
 _Depends on_: `check`, `assemble`
 +
 Intended to build everything, including running all tests, producing the production artifacts and generating documentation. You will probably rarely attach concrete tasks directly to `build` as `assemble` and `check` are typically more appropriate.
 
-`build__Configuration__` — task rule::
+`build__Configuration__` — task rule::
 Assembles those artifacts attached to the named configuration. For example, `buildArchives` will execute any task that is required to create any artifact attached to the `archives` configuration.
 
-`clean__Task__` — task rule::
+`clean__Task__` — task rule::
 Removes the <<more_about_tasks.adoc#sec:task_inputs_outputs,defined outputs>> of a task, e.g. `cleanJar` will delete the JAR file produced by the `jar` task of the Java Plugin.
 
 
@@ -97,10 +97,3 @@ Defaults to `$project.version` or 'unspecified' if the project has no version.
 
 `archiveBaseName`::
 Defaults to `$archivesBaseName`.
-
-[[sec:base_plugin_conventions]]
-== Conventions (deprecated)
-
-The Base Plugin also adds conventions related to the creation of archives, such as ZIPs, TARs and JARs.
-These are *deprecated* and superseded by the extension described above.
-See the link:{groovyDslPath}/org.gradle.api.plugins.BasePluginConvention.html[BasePluginConvention] DSL documentation for information on them.

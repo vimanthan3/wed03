@@ -37,7 +37,6 @@ class BasePluginTest extends AbstractProjectBuilderSpec {
         project.pluginManager.apply(BasePlugin)
 
         then:
-        project.convention.plugins.base instanceof BasePluginConvention
         project.extensions.findByType(DefaultArtifactPublicationSet) != null
         project.extensions.findByType(BasePluginExtension) != null
     }

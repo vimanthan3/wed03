@@ -36,7 +36,7 @@ class ArchiveIntegrationTest extends AbstractIntegrationSpec {
     def canCopyFromAZip() {
         given:
         createZip('test.zip') {
-            subdir1 {
+            subdir1 {í
                 file 'file1.txt'
             }
             subdir2 {
