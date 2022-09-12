@@ -288,7 +288,6 @@
                 "Method has been removed"
             ]
         },
-
         {
             "type": "org.gradle.api.plugins.BasePluginConvention",
             "member": "Method org.gradle.api.plugins.BasePluginConvention.setArchivesBaseName(java.lang.String)",
@@ -297,7 +296,6 @@
                 "Method has been removed"
             ]
         },
-
         {
             "type": "org.gradle.api.plugins.BasePluginConvention",
             "member": "Method org.gradle.api.plugins.BasePluginConvention.setDistsDirName(java.lang.String)",
@@ -310,6 +308,54 @@
             "type": "org.gradle.api.plugins.BasePluginConvention",
             "member": "Method org.gradle.api.plugins.BasePluginConvention.setLibsDirName(java.lang.String)",
             "acceptation": "Removed deprecated BasePluginConvention class in Gradle 8.0",
+            "changes": [
+                "Method has been removed"
+            ]
+        },
+        {
+            "type": "org.gradle.api.plugins.BasePluginExtension",
+            "member": "Method org.gradle.api.plugins.BasePluginExtension.getArchivesBaseName()",
+            "acceptation": "Removed deprecated methods from BasePluginExtension class in Gradle 8.0",
+            "changes": [
+                "Method has been removed"
+            ]
+        },
+        {
+            "type": "org.gradle.api.plugins.BasePluginExtension",
+            "member": "Method org.gradle.api.plugins.BasePluginExtension.getDistsDirName()",
+            "acceptation": "Removed deprecated methods from BasePluginExtension class in Gradle 8.0",
+            "changes": [
+                "Method has been removed"
+            ]
+        },
+        {
+            "type": "org.gradle.api.plugins.BasePluginExtension",
+            "member": "Method org.gradle.api.plugins.BasePluginExtension.getLibsDirName()",
+            "acceptation": "Removed deprecated methods from BasePluginExtension class in Gradle 8.0",
+            "changes": [
+                "Method has been removed"
+            ]
+        },
+        {
+            "type": "org.gradle.api.plugins.BasePluginExtension",
+            "member": "Method org.gradle.api.plugins.BasePluginExtension.setArchivesBaseName(java.lang.String)",
+            "acceptation": "Removed deprecated methods from BasePluginExtension class in Gradle 8.0",
+            "changes": [
+                "Method has been removed"
+            ]
+        },
+        {
+            "type": "org.gradle.api.plugins.BasePluginExtension",
+            "member": "Method org.gradle.api.plugins.BasePluginExtension.setDistsDirName(java.lang.String)",
+            "acceptation": "Removed deprecated methods from BasePluginExtension class in Gradle 8.0",
+            "changes": [
+                "Method has been removed"
+            ]
+        },
+        {
+            "type": "org.gradle.api.plugins.BasePluginExtension",
+            "member": "Method org.gradle.api.plugins.BasePluginExtension.setLibsDirName(java.lang.String)",
+            "acceptation": "Removed deprecated methods from BasePluginExtension class in Gradle 8.0",
             "changes": [
                 "Method has been removed"
             ]

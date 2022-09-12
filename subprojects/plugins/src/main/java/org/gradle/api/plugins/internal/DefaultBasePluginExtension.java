@@ -16,26 +16,21 @@
 
 package org.gradle.api.plugins.internal;
 
-import org.gradle.api.Project;
 import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.plugins.BasePluginExtension;
 import org.gradle.api.provider.Property;
-import org.gradle.util.internal.RelativePathUtil;
-
-import java.io.File;
 
 public class DefaultBasePluginExtension implements BasePluginExtension {
 
-    private final Project project;
     private final DirectoryProperty distsDirectory;
     private final DirectoryProperty libsDirectory;
     private final Property<String> archivesName;
 
-    public DefaultBasePluginExtension(Project project) {
-        this.project = project;
-        this.distsDirectory = project.getObjects().directoryProperty();
-        this.libsDirectory = project.getObjects().directoryProperty();
-        this.archivesName = project.getObjects().property(String.class);
+    public DefaultBasePluginExtension(ObjectFactory objects) {
+        this.distsDirectory = objects.directoryProperty();
+        this.libsDirectory = objects.directoryProperty();
+        this.archivesName = objects.property(String.class);
     }
 
     @Override
@@ -53,38 +48,4 @@ public class DefaultBasePluginExtension implements BasePluginExtension {
         return archivesName;
     }
 
-
-    @Override
-    public String getDistsDirName() {
-        File buildDir = project.getLayout().getBuildDirectory().get().getAsFile();
-        File distsDir = getDistsDirectory().get().getAsFile();
-        return RelativePathUtil.relativePath(buildDir, distsDir);
-    }
-
-    @Override
-    public void setDistsDirName(String distsDirName) {
-        getDistsDirectory().set(project.getLayout().getBuildDirectory().dir(distsDirName));
-    }
-
-    @Override
-    public String getLibsDirName() {
-        File buildDir = project.getLayout().getBuildDirectory().get().getAsFile();
-        File libsDir = getLibsDirectory().get().getAsFile();
-        return RelativePathUtil.relativePath(buildDir, libsDir);
-    }
-
-    @Override
-    public void setLibsDirName(String libsDirName) {
-        getLibsDirectory().set(project.getLayout().getBuildDirectory().dir(libsDirName));
-    }
-
-    @Override
-    public String getArchivesBaseName() {
-        return getArchivesName().get();
-    }
-
-    @Override
-    public void setArchivesBaseName(String archivesBaseName) {
-        getArchivesName().set(archivesBaseName);
-    }
 }
