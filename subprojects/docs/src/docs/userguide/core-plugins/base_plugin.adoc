@@ -96,4 +96,4 @@ Defaults to `distsDirectory` for non-JAR archives and `libsDirectory` for JARs a
 Defaults to `$project.version` or 'unspecified' if the project has no version.
 
 `archiveBaseName`::
-Defaults to `$archivesBaseName`.
+Defaults to `archivesName`.

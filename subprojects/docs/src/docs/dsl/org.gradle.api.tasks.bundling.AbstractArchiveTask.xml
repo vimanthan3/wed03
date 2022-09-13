@@ -34,11 +34,11 @@
             </tr>
             <tr>
                 <td>baseName</td>
-                <td><literal>project.archivesBaseName</literal></td>
+                <td><literal>project.base.archivesName</literal></td>
             </tr>
             <tr>
                 <td>archiveBaseName</td>
-                <td><literal>project.archivesBaseName</literal></td>
+                <td><literal>project.base.archivesName</literal></td>
             </tr>
             <tr>
                 <td>version</td>
