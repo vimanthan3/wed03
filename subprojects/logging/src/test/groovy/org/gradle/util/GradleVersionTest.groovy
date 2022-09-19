@@ -17,7 +17,6 @@
 package org.gradle.util
 
 import org.gradle.util.internal.DefaultGradleVersion
-import spock.lang.Issue
 import spock.lang.Specification
 
 class GradleVersionTest extends Specification {
