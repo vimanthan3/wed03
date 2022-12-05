@@ -131,6 +131,15 @@ class PmdInvoker implements Action<AntBuilderDelegate> {
             }
 
             reports.each { report ->
+                if (report.name.get() == "sarif" && version < VersionNumber.parse("6.31.0")) {
+                    // https://github.com/pmd/pmd/releases/tag/pmd_releases%2F6.31.0
+                    return
+                }
+                else if (report.name.get() == "codeclimate" && version < VersionNumber.parse("5.3.7")) {
+                    // https://github.com/pmd/pmd/releases/tag/pmd_releases%2F5.3.7
+                    return
+                }
+
                 File file = report.outputLocation.asFile.get()
                 assert file.parentFile.exists()
                 String type = report.name.get() == "html" ? htmlFormat : report.name.get()

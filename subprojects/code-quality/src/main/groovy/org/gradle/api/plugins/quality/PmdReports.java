@@ -40,4 +40,28 @@ public interface PmdReports extends ReportContainer<SingleFileReport> {
      */
     @Internal
     SingleFileReport getXml();
+
+    /**
+     * The pmd (single file) CSV report
+     *
+     * @return The pmd (single file) CSV report
+     */
+    @Internal
+    SingleFileReport getCsv();
+
+    /**
+     * The pmd (single file) Code Climate JSON report
+     *
+     * @return The pmd (single file) Code Climate JSON report
+     */
+    @Internal
+    SingleFileReport getCodeClimate();
+
+    /**
+     * The pmd (single file) sarif JSON report
+     *
+     * @return The pmd (single file) sarif JSON report
+     */
+    @Internal
+    SingleFileReport getSarif();
 }
