@@ -69,8 +69,8 @@ public class JUnitPlatformTestFramework implements TestFramework {
         }
         return new JUnitPlatformTestClassProcessorFactory(new JUnitPlatformSpec(
             filter.toSpec(), options.getIncludeEngines(), options.getExcludeEngines(),
-            options.getIncludeTags(), options.getExcludeTags()
-        ));
+            options.getIncludeTags(), options.getExcludeTags(),
+            filter.getJunitPlatformSelectorPatterns()));
     }
 
     @Override

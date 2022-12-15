@@ -28,19 +28,22 @@ public class JUnitPlatformSpec implements Serializable {
     private final Set<String> excludeEngines;
     private final Set<String> includeTags;
     private final Set<String> excludeTags;
+    private final Set<String> selectorPatterns;
 
     public JUnitPlatformSpec(
         TestFilterSpec filter,
         Set<String> includeEngines,
         Set<String> excludeEngines,
         Set<String> includeTags,
-        Set<String> excludeTags
+        Set<String> excludeTags,
+        Set<String> selectorPatterns
     ) {
         this.filter = filter;
         this.includeEngines = includeEngines;
         this.excludeEngines = excludeEngines;
         this.includeTags = includeTags;
         this.excludeTags = excludeTags;
+        this.selectorPatterns = selectorPatterns;
     }
 
     public TestFilterSpec getFilter() {
@@ -61,5 +64,9 @@ public class JUnitPlatformSpec implements Serializable {
 
     public List<String> getExcludeTags() {
         return new ArrayList<String>(excludeTags);
+    }
+
+    public List<String> getSelectorPatterns() {
+        return new ArrayList<String>(selectorPatterns);
     }
 }
