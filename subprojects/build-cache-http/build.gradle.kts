@@ -16,6 +16,8 @@ dependencies {
     implementation(libs.slf4jApi)
     implementation(libs.guava)
     implementation(libs.commonsHttpclient)
+    implementation(libs.commonsHttpclientAsync)
+    implementation(libs.commonsHttpcomponentsNio)
     implementation(libs.inject)
 
     testImplementation(testFixtures(project(":core")))

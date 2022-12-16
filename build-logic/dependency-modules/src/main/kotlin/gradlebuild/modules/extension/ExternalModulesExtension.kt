@@ -47,6 +47,8 @@ abstract class ExternalModulesExtension {
     val commonsCodec = "commons-codec:commons-codec"
     val commonsCompress = "org.apache.commons:commons-compress"
     val commonsHttpclient = "org.apache.httpcomponents:httpclient"
+    val commonsHttpclientAsync = "org.apache.httpcomponents:httpcomponents-asyncclient"
+    val commonsHttpcomponentsNio = "org.apache.httpcomponents:httpcore-nio"
     val commonsIo = "commons-io:commons-io"
     val commonsLang = "commons-lang:commons-lang"
     val commonsLang3 = "org.apache.commons:commons-lang3"
@@ -198,6 +200,8 @@ abstract class ExternalModulesExtension {
         commonsCodec to License.Apache2,
         commonsCompress to License.Apache2,
         commonsHttpclient to License.Apache2,
+        commonsHttpclientAsync to License.Apache2,
+        commonsHttpcomponentsNio to License.Apache2,
         commonsIo to License.Apache2,
         commonsLang to License.Apache2,
         commonsLang3 to License.Apache2,

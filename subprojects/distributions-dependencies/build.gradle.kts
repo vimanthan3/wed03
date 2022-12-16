@@ -58,6 +58,8 @@ dependencies {
         api(libs.commonsCodec)          { version { strictly("1.15") }}
         api(libs.commonsCompress)       { version { strictly("1.21") }}
         api(libs.commonsHttpclient)     { version { strictly("4.5.13") }}
+        api(libs.commonsHttpclientAsync) { version { strictly("4.1.5") }}
+        api(libs.commonsHttpcomponentsNio) { version { strictly("4.4.15"); because("AsyncHttpClient requires it") }}
         api(libs.commonsIo)             { version { strictly("2.11.0") }}
         api(libs.commonsLang)           { version { strictly("2.6") }}
         api(libs.commonsLang3)          { version { strictly("3.12.0") }}

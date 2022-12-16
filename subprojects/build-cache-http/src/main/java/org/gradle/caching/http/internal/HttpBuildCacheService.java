@@ -178,6 +178,8 @@ public class HttpBuildCacheService implements BuildCacheService {
     @Override
     public void close() throws IOException {
         httpClientHelper.close();
+
+        // TODO: close the client
     }
 
     /**
