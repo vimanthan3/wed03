@@ -109,12 +109,21 @@ class PmdInvoker implements Action<AntBuilderDelegate> {
             antPmdArgs['threads'] = parameters.threads.get()
         }
 
+        List<PmdActionParameters.EnabledReport> reports = parameters.enabledReports.get()
+
+        reports.each { report ->
+            if (report.name.get() == "sarif") {
+                assertSarifReportSupportedByPmdVersion(version)
+            } else if (report.name.get() == "codeclimate") {
+                assertCodeClimateReportSupportedByPmdVersion(version)
+            }
+        }
+
         int maxFailures = parameters.maxFailures.get()
         if (maxFailures < 0) {
             throw new GradleException("Invalid maxFailures $maxFailures. Valid range is >= 0.")
         }
 
-        List<PmdActionParameters.EnabledReport> reports = parameters.enabledReports.get()
         ant.taskdef(name: 'pmd', classname: 'net.sourceforge.pmd.ant.PMDTask')
         ant.pmd(antPmdArgs) {
             parameters.source.addToAntBuilder(ant, 'fileset', FileCollection.AntType.FileSet)
@@ -131,15 +140,6 @@ class PmdInvoker implements Action<AntBuilderDelegate> {
             }
 
             reports.each { report ->
-                if (report.name.get() == "sarif" && version < VersionNumber.parse("6.31.0")) {
-                    // https://github.com/pmd/pmd/releases/tag/pmd_releases%2F6.31.0
-                    return
-                }
-                else if (report.name.get() == "codeclimate" && version < VersionNumber.parse("5.3.7")) {
-                    // https://github.com/pmd/pmd/releases/tag/pmd_releases%2F5.3.7
-                    return
-                }
-
                 File file = report.outputLocation.asFile.get()
                 assert file.parentFile.exists()
                 String type = report.name.get() == "html" ? htmlFormat : report.name.get()
@@ -184,6 +184,20 @@ class PmdInvoker implements Action<AntBuilderDelegate> {
 
     private static void assertUnsupportedIncrementalAnalysis(VersionNumber version) {
         throw new GradleException("Incremental analysis only supports PMD 6.0.0 and newer. Please upgrade from PMD " + version + " or disable incremental analysis.")
+    }
+
+    private static void assertSarifReportSupportedByPmdVersion(VersionNumber version) {
+        if (version < VersionNumber.parse("6.31.0")) {
+            // https://github.com/pmd/pmd/releases/tag/pmd_releases%2F6.31.0
+            throw new GradleException("The Sarif output format is only supported by PMD 6.31.0 and newer. Please upgrade from PMD " + version + " or disable the 'sarif' report.")
+        }
+    }
+
+    private static void assertCodeClimateReportSupportedByPmdVersion(VersionNumber version) {
+        if (version < VersionNumber.parse("5.3.7")) {
+            // https://github.com/pmd/pmd/releases/tag/pmd_releases%2F5.3.7
+            throw new GradleException("The CodeClimate output format is only supported by PMD 5.3.7 and newer. Please upgrade from PMD " + version + " or disable the 'codeclimate' report.")
+        }
     }
 
     private static class FileExistFilter implements Spec<File> {
