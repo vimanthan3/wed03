@@ -142,7 +142,7 @@ class PmdInvoker implements Action<AntBuilderDelegate> {
             reports.each { report ->
                 File file = report.outputLocation.asFile.get()
                 assert file.parentFile.exists()
-                String type = report.name.get() == "html" ? htmlFormat : report.name.get()
+                String type = report.name.get() == "html" ? htmlFormat : toFormatterName(report.name.get())
                 formatter(type: type, toFile: file)
             }
 
@@ -198,6 +198,17 @@ class PmdInvoker implements Action<AntBuilderDelegate> {
             // https://github.com/pmd/pmd/releases/tag/pmd_releases%2F5.3.7
             throw new GradleException("The CodeClimate output format is only supported by PMD 5.3.7 and newer. Please upgrade from PMD " + version + " or disable the 'codeclimate' report.")
         }
+    }
+
+    private static String toFormatterName(String name) {
+        if (name.contains("codeclimate")) {
+            return "codeclimate"
+        }
+        else if (name.contains("sarif")) {
+            return "sarif"
+        }
+
+        return name
     }
 
     private static class FileExistFilter implements Spec<File> {
