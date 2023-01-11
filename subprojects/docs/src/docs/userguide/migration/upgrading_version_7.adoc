@@ -619,6 +619,12 @@ The list of additional parameters for Scala compilation retrieved from the `Scal
 
 Previously, the mutability of the list depended on the last assigned value.
 
+==== Changes to configurations created by the War Plugin
+
+The link:war_plugin.html[War Plugin] creates configurations named `providedCompile` and `providedRuntime`.  These were previously used for both declaring dependencies and resolving them into classpaths.
+
+These configurations are no longer resolvable.  They are extended by the new `providedCompileClasspath` and `providedRuntimeClasspath` configurations, ,which are resolvable.  The plugin will now use these new configurations internally to resolve dependencies.
+
 [[changes_7.6]]
 == Upgrading from 7.5 and earlier
 
