@@ -132,6 +132,7 @@ fun scriptDefinitionFromTemplate(
     injectedProperties: Map<String, KotlinType> = mapOf(),
     classPath: List<File> = listOf()
 ): ScriptDefinition {
+    // TODO move most of this to compiled templates
     val hostConfiguration = ScriptingHostConfiguration {
         getScriptingClass(JvmGetScriptingClass())
         configurationDependencies(JvmDependency(classPath))
@@ -186,6 +187,9 @@ fun compileKotlinScriptModuleTo(
     classPath: Iterable<File>,
     messageCollector: LoggingMessageCollector
 ) {
+    // TODO JvmScriptCompiler to get rid of the old internal compiled api
+    //  use in memory bytes output and write class files ourselves
+    //  take a look at CompiledScriptJarsCache and BasicJvmScriptClassFilesGenerator
     withRootDisposable {
         withCompilationExceptionHandler(messageCollector) {
             val configuration = compilerConfigurationFor(messageCollector, jvmTarget).apply {
