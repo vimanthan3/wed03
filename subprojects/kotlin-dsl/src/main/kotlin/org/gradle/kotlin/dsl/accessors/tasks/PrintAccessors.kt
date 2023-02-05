@@ -20,6 +20,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.tasks.TaskAction
 import org.gradle.internal.serialization.Cached
+import org.gradle.kotlin.dsl.*
 
 import org.gradle.kotlin.dsl.accessors.ProjectSchemaProvider
 import org.gradle.kotlin.dsl.accessors.TypedProjectSchema
@@ -55,7 +56,7 @@ abstract class PrintAccessors : DefaultTask() {
 
     private
     fun schemaOf(project: Project) =
-        projectSchemaProvider.schemaFor(project)
+        projectSchemaProvider.schemaFor(project, typeOf<Project>())
 }
 
 

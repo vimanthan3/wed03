@@ -18,6 +18,7 @@ package org.gradle.kotlin.dsl
 
 import org.gradle.api.Incubating
 import org.gradle.api.toolchain.management.ToolchainManagement
+import org.gradle.internal.deprecation.DeprecationLogger
 import org.gradle.jvm.toolchain.JvmToolchainManagement
 
 
@@ -28,7 +29,16 @@ import org.gradle.jvm.toolchain.JvmToolchainManagement
  * @since 7.6
  */
 @Incubating
+@Deprecated(
+    message = "Prefer generated type-safe accessors or use the API. Will be removed in 9.0.",
+    replaceWith = ReplaceWith(
+        "configure<JvmToolchainManagement> {}",
+        "org.gradle.jvm.toolchain.JvmToolchainManagement"
+    ),
+    level = DeprecationLevel.HIDDEN,
+)
 fun ToolchainManagement.jvm(block: JvmToolchainManagement.() -> Unit) {
+    logDeprecation()
     extensions.configure(JvmToolchainManagement::class.java, block)
 }
 
@@ -40,5 +50,25 @@ fun ToolchainManagement.jvm(block: JvmToolchainManagement.() -> Unit) {
  * @since 7.6
  */
 @get:Incubating
+@Deprecated(
+    message = "Prefer generated type-safe accessors or use the API. Will be removed in 9.0.",
+    replaceWith = ReplaceWith(
+        "the<JvmToolchainManagement>()",
+        "org.gradle.jvm.toolchain.JvmToolchainManagement"
+    ),
+    level = DeprecationLevel.HIDDEN,
+)
 val ToolchainManagement.jvm: JvmToolchainManagement
-    get() = extensions.getByType(JvmToolchainManagement::class.java)
+    get() {
+        logDeprecation()
+        return extensions.getByType(JvmToolchainManagement::class.java)
+    }
+
+
+private
+fun logDeprecation() {
+    DeprecationLogger.deprecate("import org.gradle.kotlin.dsl.jvm")
+        .willBeRemovedInGradle9()
+        .undocumented()
+        .nagUser()
+}

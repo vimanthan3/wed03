@@ -18,6 +18,7 @@ package org.gradle.kotlin.dsl.provider.plugins.precompiled.tasks
 
 import org.gradle.StartParameter
 import org.gradle.api.GradleException
+import org.gradle.api.Project
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.ProjectLayout
@@ -49,6 +50,7 @@ import org.gradle.internal.concurrent.CompositeStoppable.stoppable
 import org.gradle.internal.exceptions.LocationAwareException
 import org.gradle.internal.hash.HashCode
 import org.gradle.internal.resource.TextFileResourceLoader
+import org.gradle.kotlin.dsl.*
 import org.gradle.kotlin.dsl.accessors.AccessorFormats
 import org.gradle.kotlin.dsl.accessors.ProjectSchemaProvider
 import org.gradle.kotlin.dsl.accessors.TypedProjectSchema
@@ -347,7 +349,7 @@ abstract class GeneratePrecompiledScriptPluginAccessors @Inject internal constru
                     gradle.defaultProject = rootProject
                     rootProject.run {
                         applyPlugins(plugins)
-                        serviceOf<ProjectSchemaProvider>().schemaFor(this)
+                        serviceOf<ProjectSchemaProvider>().schemaFor(this, typeOf<Project>())
                     }
                 }
             }

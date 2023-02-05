@@ -40,6 +40,8 @@ class JavaToolchainDownloadIntegrationTest extends AbstractIntegrationSpec {
 
         file("src/main/java/Foo.java") << "public class Foo {}"
 
+        executer.expectDeprecationWarning("import org.gradle.kotlin.dsl.jvm has been deprecated. This is scheduled to be removed in Gradle 9.0.")
+
         when:
         failure = executer
             .withTasks("compileJava")
@@ -54,7 +56,7 @@ class JavaToolchainDownloadIntegrationTest extends AbstractIntegrationSpec {
             .assertHasCause("Failed to calculate the value of task ':compileJava' property 'javaCompiler'")
             .assertHasCause("No matching toolchains found for requested specification: {languageVersion=14, vendor=ADOPTIUM, implementation=J9}.")
             .assertHasDocumentedCause("No locally installed toolchains match (see https://docs.gradle.org/current/userguide/toolchains.html#sec:auto_detection) " +
-                    "and the configured toolchain download repositories aren't able to provide a match either (see https://docs.gradle.org/current/userguide/toolchains.html#sub:download_repositories).")
+                "and the configured toolchain download repositories aren't able to provide a match either (see https://docs.gradle.org/current/userguide/toolchains.html#sub:download_repositories).")
     }
 
     @ToBeFixedForConfigurationCache(because = "Fails the build with an additional error")
@@ -77,6 +79,8 @@ class JavaToolchainDownloadIntegrationTest extends AbstractIntegrationSpec {
 
         file("src/main/java/Foo.java") << "public class Foo {}"
 
+        executer.expectDeprecationWarning("import org.gradle.kotlin.dsl.jvm has been deprecated. This is scheduled to be removed in Gradle 9.0.")
+
         when:
         failure = executer
             .withTasks("compileJava")
@@ -89,7 +93,7 @@ class JavaToolchainDownloadIntegrationTest extends AbstractIntegrationSpec {
             .assertHasCause("Failed to calculate the value of task ':compileJava' property 'javaCompiler'")
             .assertHasCause("No matching toolchains found for requested specification: {languageVersion=14, vendor=any, implementation=vendor-specific}.")
             .assertHasDocumentedCause("No locally installed toolchains match (see https://docs.gradle.org/current/userguide/toolchains.html#sec:auto_detection) " +
-                    "and toolchain auto-provisioning is not enabled (see https://docs.gradle.org/current/userguide/toolchains.html#sec:auto_detection).")
+                "and toolchain auto-provisioning is not enabled (see https://docs.gradle.org/current/userguide/toolchains.html#sec:auto_detection).")
     }
 
     @ToBeFixedForConfigurationCache(because = "Fails the build with an additional error")
@@ -136,16 +140,16 @@ class JavaToolchainDownloadIntegrationTest extends AbstractIntegrationSpec {
             public abstract class CustomToolchainResolverPlugin implements Plugin<Settings> {
                 @Inject
                 protected abstract JavaToolchainResolverRegistry getToolchainResolverRegistry();
-            
+
                 void apply(Settings settings) {
                     settings.getPlugins().apply("jvm-toolchain-management");
-                
+
                     JavaToolchainResolverRegistry registry = getToolchainResolverRegistry();
                     registry.register(CustomToolchainResolver.class);
                 }
             }
-            
-            
+
+
             import java.util.Optional;
             import org.gradle.platform.BuildPlatform;
 
@@ -156,10 +160,10 @@ class JavaToolchainDownloadIntegrationTest extends AbstractIntegrationSpec {
                     return Optional.of(JavaToolchainDownload.fromUri(uri));
                 }
             }
-            
+
 
             apply plugin: CustomToolchainResolverPlugin
-                       
+
             toolchainManagement {
                 jvm {
                     javaRepositories {

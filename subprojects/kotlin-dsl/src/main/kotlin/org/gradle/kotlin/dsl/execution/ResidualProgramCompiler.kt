@@ -835,4 +835,4 @@ class ResidualProgramCompiler(
 
 internal
 fun requiresAccessors(programTarget: ProgramTarget, programKind: ProgramKind) =
-    programTarget == ProgramTarget.Project && programKind == ProgramKind.TopLevel
+    programTarget in listOf(ProgramTarget.Project, ProgramTarget.Settings) && programKind == ProgramKind.TopLevel

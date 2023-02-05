@@ -16,7 +16,7 @@
 
 package org.gradle.kotlin.dsl.accessors
 
-import org.gradle.api.Project
+import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.reflect.TypeOf
 
 import org.gradle.kotlin.dsl.typeOf
@@ -24,9 +24,10 @@ import org.gradle.kotlin.dsl.typeOf
 import java.io.Serializable
 
 
+// TODO rename to TargetSchemaProvider
 interface ProjectSchemaProvider {
 
-    fun schemaFor(project: Project): TypedProjectSchema
+    fun <T : ExtensionAware> schemaFor(target: T, typeOfTarget: TypeOf<*>): TypedProjectSchema
 }
 
 

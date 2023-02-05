@@ -108,6 +108,7 @@ public abstract class DefaultSettings extends AbstractPluginAware implements Set
         this.rootProjectDescriptor = createProjectDescriptor(null, getProjectName(settingsDir), settingsDir);
         this.dependencyResolutionManagement = services.get(DependencyResolutionManagementInternal.class);
         this.toolchainManagement = services.get(ToolchainManagementInternal.class);
+        getExtensions().add(ToolchainManagement.class, "toolchainManagement", toolchainManagement);
     }
 
     private static String getProjectName(File settingsDir) {

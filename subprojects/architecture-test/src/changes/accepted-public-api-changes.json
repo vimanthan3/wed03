@@ -143,6 +143,14 @@
             "changes": [
                 "Superclass has been removed"
             ]
+        },
+        {
+            "type": "org.gradle.kotlin.dsl.ToolchainManagementExtensionsKt",
+            "member": "Method org.gradle.kotlin.dsl.ToolchainManagementExtensionsKt.getJvm$annotations(org.gradle.api.toolchain.management.ToolchainManagement)",
+            "acceptation": "Removal of a workaround for the lack of accessors in Kotlin settings scripts",
+            "changes": [
+                "Method added to public class"
+            ]
         }
     ]
 }

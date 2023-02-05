@@ -42,14 +42,14 @@ import kotlin.reflect.KVisibility
 
 class DefaultProjectSchemaProvider : ProjectSchemaProvider {
 
-    override fun schemaFor(project: Project): TypedProjectSchema =
-        targetSchemaFor(project, typeOfProject).let { targetSchema ->
+    override fun <T : ExtensionAware> schemaFor(target: T, typeOfTarget: TypeOf<*>): TypedProjectSchema =
+        targetSchemaFor(target, typeOfTarget).let { targetSchema ->
             ProjectSchema(
                 targetSchema.extensions,
                 targetSchema.conventions,
                 targetSchema.tasks,
                 targetSchema.containerElements,
-                accessibleConfigurationsOf(project)
+                accessibleConfigurationsOf(target)
             ).map(::SchemaType)
         }
 }
@@ -243,10 +243,11 @@ val Class<*>.firstNonSyntheticOrNull: Class<*>?
 
 
 private
-fun accessibleConfigurationsOf(project: Project) =
-    project.configurations
-        .filter { isPublic(it.name) }
-        .map(::toConfigurationEntry)
+fun <T : ExtensionAware> accessibleConfigurationsOf(target: T): List<ConfigurationEntry<String>> =
+    when (target) {
+        is Project -> target.configurations.filter { isPublic(it.name) }.map(::toConfigurationEntry)
+        else -> emptyList()
+    }
 
 
 private
@@ -258,10 +259,6 @@ fun toConfigurationEntry(configuration: Configuration) = (configuration as Depre
 private
 fun isPublic(name: String): Boolean =
     !name.startsWith("_")
-
-
-private
-val typeOfProject = typeOf<Project>()
 
 
 private

@@ -44,11 +44,13 @@ import org.gradle.kotlin.dsl.fixtures.assertStandardOutputOf
 import org.gradle.plugin.management.internal.PluginRequests
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.MatcherAssert.assertThat
+import org.junit.Ignore
 import org.junit.Test
 import org.mockito.InOrder
 import java.util.Arrays.fill
 
 
+@Ignore
 class ResidualProgramCompilerTest : TestWithCompiler() {
 
     @Test

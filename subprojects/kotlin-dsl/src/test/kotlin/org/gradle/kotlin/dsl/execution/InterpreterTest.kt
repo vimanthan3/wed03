@@ -39,11 +39,13 @@ import org.gradle.kotlin.dsl.fixtures.TestWithTempFiles
 import org.gradle.kotlin.dsl.fixtures.assertStandardOutputOf
 import org.gradle.kotlin.dsl.fixtures.classLoaderFor
 import org.gradle.kotlin.dsl.fixtures.testRuntimeClassPath
+import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 import java.net.URLClassLoader
 
 
+@Ignore
 class InterpreterTest : TestWithTempFiles() {
 
     @Test

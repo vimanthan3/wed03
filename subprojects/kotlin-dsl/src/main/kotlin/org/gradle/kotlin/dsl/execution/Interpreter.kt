@@ -34,12 +34,12 @@ import org.gradle.internal.classpath.ClassPath
 import org.gradle.internal.exceptions.LocationAwareException
 import org.gradle.internal.hash.HashCode
 import org.gradle.internal.service.ServiceRegistry
-import org.gradle.kotlin.dsl.accessors.ProjectAccessorsClassPathGenerator
+import org.gradle.kotlin.dsl.accessors.AccessorsTarget
 import org.gradle.kotlin.dsl.assignment.internal.KotlinDslAssignment
 import org.gradle.kotlin.dsl.support.KotlinScriptHost
 import org.gradle.kotlin.dsl.support.ScriptCompilationException
+import org.gradle.kotlin.dsl.support.internalError
 import org.gradle.kotlin.dsl.support.loggerFor
-import org.gradle.kotlin.dsl.support.serviceOf
 import org.gradle.kotlin.dsl.support.serviceRegistryOf
 import org.gradle.plugin.management.internal.PluginRequests
 import java.io.File
@@ -345,6 +345,7 @@ class Interpreter(val host: Host) {
                     ?.associate { it.first to it.second!!.getKotlinType() }
                     ?: mapOf()
             }
+
             else -> mapOf()
         }
 
@@ -461,14 +462,15 @@ class Interpreter(val host: Host) {
             eval(specializedProgram, scriptHost)
         }
 
-        override fun accessorsClassPathFor(scriptHost: KotlinScriptHost<*>): ClassPath {
-            val project = scriptHost.target as Project
-            val projectAccessorsClassPathGenerator = project.serviceOf<ProjectAccessorsClassPathGenerator>()
-            return projectAccessorsClassPathGenerator.projectAccessorsClassPath(
-                project,
+        override fun accessorsClassPathFor(scriptHost: KotlinScriptHost<*>): ClassPath =
+            scriptHost.targetAccessorsClassPathGenerator.projectAccessorsClassPath(
+                when (scriptHost.target) {
+                    is Project -> AccessorsTarget.of(scriptHost.target)
+                    is Settings -> AccessorsTarget.of(scriptHost.target)
+                    else -> internalError()
+                },
                 host.compilationClassPathOf(scriptHost.targetScope)
             ).bin
-        }
 
         override fun compileSecondStageOf(
             program: ExecutableProgram.StagedProgram,

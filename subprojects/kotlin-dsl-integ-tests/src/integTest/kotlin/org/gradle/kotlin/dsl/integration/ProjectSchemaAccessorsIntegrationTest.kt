@@ -1432,6 +1432,22 @@ class ProjectSchemaAccessorsIntegrationTest : AbstractPluginIntegrationTest() {
         )
     }
 
+    @Test
+    fun `can use accessors to settings extensions`() {
+        executer.requireOwnGradleUserHomeDir()
+        withSettings("""
+            plugins {
+                id("jvm-toolchain-management")
+            }
+            toolchainManagement {
+                // generated accessor to 'jvm' extension on 'toolchainManagement' settings extension
+                jvm
+                jvm {}
+            }
+        """)
+        build("help", "-s")
+    }
+
     private
     fun withBuildSrc(contents: FoldersDslExpression) {
         withFolders {

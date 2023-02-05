@@ -35,6 +35,7 @@ import org.gradle.api.plugins.ObjectConfigurationAction
 import org.gradle.groovy.scripts.ScriptSource
 
 import org.gradle.internal.service.ServiceRegistry
+import org.gradle.kotlin.dsl.accessors.ProjectAccessorsClassPathGenerator
 
 import org.gradle.kotlin.dsl.invoke
 
@@ -53,6 +54,11 @@ class KotlinScriptHost<out T : Any> internal constructor(
 
     internal
     val fileName = scriptSource.fileName!!
+
+    internal
+    val targetAccessorsClassPathGenerator: ProjectAccessorsClassPathGenerator by unsafeLazy {
+        serviceRegistry.get()
+    }
 
     internal
     val fileOperations: FileOperations by unsafeLazy {

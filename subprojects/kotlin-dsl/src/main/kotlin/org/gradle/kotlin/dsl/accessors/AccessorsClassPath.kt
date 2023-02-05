@@ -17,8 +17,13 @@
 package org.gradle.kotlin.dsl.accessors
 
 import org.gradle.api.Project
+import org.gradle.api.initialization.Settings
+import org.gradle.api.internal.SettingsInternal
 import org.gradle.api.internal.file.FileCollectionFactory
+import org.gradle.api.internal.initialization.ClassLoaderScope
 import org.gradle.api.internal.project.ProjectInternal
+import org.gradle.api.plugins.ExtensionAware
+import org.gradle.api.reflect.TypeOf
 import org.gradle.internal.classanalysis.AsmConstants.ASM_LEVEL
 import org.gradle.internal.classpath.ClassPath
 import org.gradle.internal.classpath.DefaultClassPath
@@ -38,13 +43,15 @@ import org.gradle.internal.hash.Hasher
 import org.gradle.internal.hash.Hashing
 import org.gradle.internal.properties.InputBehavior.NON_INCREMENTAL
 import org.gradle.internal.snapshot.ValueSnapshot
+import org.gradle.kotlin.dsl.*
 import org.gradle.kotlin.dsl.cache.KotlinDslWorkspaceProvider
 import org.gradle.kotlin.dsl.codegen.fileHeaderFor
 import org.gradle.kotlin.dsl.codegen.kotlinDslPackageName
+import org.gradle.kotlin.dsl.concurrent.AsyncIOScopeFactory
 import org.gradle.kotlin.dsl.concurrent.IO
-import org.gradle.kotlin.dsl.concurrent.withAsynchronousIO
 import org.gradle.kotlin.dsl.support.ClassBytesRepository
 import org.gradle.kotlin.dsl.support.appendReproducibleNewLine
+import org.gradle.kotlin.dsl.support.serviceOf
 import org.gradle.kotlin.dsl.support.useToRun
 import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.metadata.ProtoBuf.Visibility
@@ -62,6 +69,41 @@ import java.io.File
 import javax.inject.Inject
 
 
+data class AccessorsTarget internal constructor(
+
+    internal
+    val target: ExtensionAware,
+
+    internal
+    val typeOfTarget: TypeOf<*>,
+
+    internal
+    val classLoaderScope: ClassLoaderScope,
+
+    private
+    val asyncIOScopeFactory: AsyncIOScopeFactory,
+) {
+
+    companion object {
+
+        fun of(project: Project): AccessorsTarget =
+            AccessorsTarget(project, typeOf<Project>(), classLoaderScopeOf(project), project.serviceOf())
+
+        fun of(settings: Settings): AccessorsTarget =
+            AccessorsTarget(settings, typeOf<Settings>(), classLoaderScopeOf(settings), settings.gradle.serviceOf())
+    }
+
+    internal
+    val displayName: String
+        get() = target.toString()
+
+    internal
+    fun <T> withAsynchronousIO(action: IO.() -> T): T =
+        asyncIOScopeFactory.newScope().useToRun(action)
+}
+
+
+// TODO rename to TargetAccessorsClassPathGenerator
 class ProjectAccessorsClassPathGenerator @Inject internal constructor(
     private val fileCollectionFactory: FileCollectionFactory,
     private val projectSchemaProvider: ProjectSchemaProvider,
@@ -70,18 +112,18 @@ class ProjectAccessorsClassPathGenerator @Inject internal constructor(
     private val workspaceProvider: KotlinDslWorkspaceProvider
 ) {
 
-    fun projectAccessorsClassPath(project: Project, classPath: ClassPath): AccessorsClassPath =
-        project.getOrCreateProperty("gradleKotlinDsl.projectAccessorsClassPath") {
-            buildAccessorsClassPathFor(project, classPath)
+    fun projectAccessorsClassPath(accessorsTarget: AccessorsTarget, classPath: ClassPath): AccessorsClassPath =
+        accessorsTarget.target.getOrCreateProperty("gradleKotlinDsl.projectAccessorsClassPath") {
+            buildAccessorsClassPathFor(accessorsTarget, classPath)
                 ?: AccessorsClassPath.empty
         }
 
 
     private
-    fun buildAccessorsClassPathFor(project: Project, classPath: ClassPath): AccessorsClassPath? {
-        return configuredProjectSchemaOf(project)?.let { projectSchema ->
+    fun buildAccessorsClassPathFor(accessorsTarget: AccessorsTarget, classPath: ClassPath): AccessorsClassPath? {
+        return configuredProjectSchemaOf(accessorsTarget)?.let { projectSchema ->
             val work = GenerateProjectAccessors(
-                project,
+                accessorsTarget,
                 projectSchema,
                 classPath,
                 fileCollectionFactory,
@@ -95,18 +137,20 @@ class ProjectAccessorsClassPathGenerator @Inject internal constructor(
 
 
     private
-    fun configuredProjectSchemaOf(project: Project): TypedProjectSchema? {
-        require(classLoaderScopeOf(project).isLocked) {
+    fun configuredProjectSchemaOf(accessorsTarget: AccessorsTarget): TypedProjectSchema? {
+        require(accessorsTarget.classLoaderScope.isLocked) {
             "project.classLoaderScope must be locked before querying the project schema"
         }
-        return projectSchemaProvider.schemaFor(project).takeIf { it.isNotEmpty() }
+        return projectSchemaProvider
+            .schemaFor(accessorsTarget.target, accessorsTarget.typeOfTarget)
+            .takeIf { it.isNotEmpty() }
     }
 }
 
 
 internal
 class GenerateProjectAccessors(
-    private val project: Project,
+    private val accessorsTarget: AccessorsTarget,
     private val projectSchema: TypedProjectSchema,
     private val classPath: ClassPath,
     private val fileCollectionFactory: FileCollectionFactory,
@@ -123,7 +167,7 @@ class GenerateProjectAccessors(
 
     override fun execute(executionRequest: UnitOfWork.ExecutionRequest): UnitOfWork.WorkOutput {
         val workspace = executionRequest.workspace
-        withAsynchronousIO(project) {
+        accessorsTarget.withAsynchronousIO {
             buildAccessorsFor(
                 projectSchema,
                 classPath,
@@ -155,7 +199,7 @@ class GenerateProjectAccessors(
 
     override fun getInputFingerprinter() = inputFingerprinter
 
-    override fun getDisplayName(): String = "Kotlin DSL accessors for $project"
+    override fun getDisplayName(): String = "Kotlin DSL accessors for ${accessorsTarget.displayName}"
 
     override fun visitIdentityInputs(visitor: InputVisitor) {
         visitor.visitInputProperty(PROJECT_SCHEMA_INPUT_PROPERTY) { hashCodeFor(projectSchema) }
@@ -406,6 +450,7 @@ fun classNamesFromTypeString(typeString: String): ClassNamesFromTypeString {
                 nonPrimitiveKotlinType()?.also { all.add(it) }
                 buffer = StringBuilder()
             }
+
             in " ,>" -> {
                 nonPrimitiveKotlinType()?.also {
                     all.add(it)
@@ -413,6 +458,7 @@ fun classNamesFromTypeString(typeString: String): ClassNamesFromTypeString {
                 }
                 buffer = StringBuilder()
             }
+
             else -> buffer.append(char)
         }
     }
@@ -451,6 +497,7 @@ class KotlinVisibilityClassVisitor : ClassVisitor(ASM_LEVEL) {
             "Lkotlin/Metadata;" -> ClassDataFromKotlinMetadataAnnotationVisitor { classData ->
                 visibility = Flags.VISIBILITY[classData.flags]
             }
+
             else -> null
         }
 }
@@ -543,6 +590,11 @@ fun inaccessible(type: SchemaType, reasons: List<InaccessibilityReason>): TypeAc
 private
 fun classLoaderScopeOf(project: Project) =
     (project as ProjectInternal).classLoaderScope
+
+
+private
+fun classLoaderScopeOf(settings: Settings) =
+    (settings as SettingsInternal).classLoaderScope
 
 
 fun hashCodeFor(schema: TypedProjectSchema): HashCode = Hashing.newHasher().run {
