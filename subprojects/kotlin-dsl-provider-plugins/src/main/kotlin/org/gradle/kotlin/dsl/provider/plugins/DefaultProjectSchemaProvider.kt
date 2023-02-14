@@ -80,7 +80,7 @@ fun targetSchemaFor(target: Any, targetType: TypeOf<*>): TargetTypedSchema {
                 val extension = target.extensions.getByName(schema.name)
                 collectSchemaOf(extension, schema.publicType)
                 namedDomainObjectContainerPropertiesOf(extension).forEach { (container, containerType) ->
-                    collectSchemaOf(container, TypeOf.typeOf(containerType))
+                    collectSchemaOf(container, containerType)
                 }
             }
         }
@@ -119,12 +119,22 @@ fun targetSchemaFor(target: Any, targetType: TypeOf<*>): TargetTypedSchema {
 
 
 private
-fun namedDomainObjectContainerPropertiesOf(extension: Any) = JavaPropertyReflectionUtil.propertyNames(extension)
-    .asSequence()
-    .map { JavaPropertyReflectionUtil.findGetterMethod(extension::class.java, it) }
-    .filterNotNull()
-    .filter { NamedDomainObjectContainer::class.java.isAssignableFrom(it.returnType) && it.returnType.typeParameters.isEmpty() }
-    .map { it.invoke(extension) to it.returnType }
+fun namedDomainObjectContainerPropertiesOf(extension: Any) =
+    namedDomainObjectContainerGettersOf(extension)
+        .filter { it.returnType.typeParameters.isEmpty() }
+        .map { getter ->
+            val container = getter.invoke(extension)
+            container to DslObject(container).getPublicType(getter.returnType)
+        }
+
+
+private
+fun namedDomainObjectContainerGettersOf(extension: Any) =
+    JavaPropertyReflectionUtil.propertyNames(extension)
+        .asSequence()
+        .map { JavaPropertyReflectionUtil.findGetterMethod(extension::class.java, it) }
+        .filterNotNull()
+        .filter { NamedDomainObjectContainer::class.java.isAssignableFrom(it.returnType) }
 
 
 private

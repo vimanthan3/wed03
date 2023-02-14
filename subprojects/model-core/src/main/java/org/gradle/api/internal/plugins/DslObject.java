@@ -16,10 +16,12 @@
 
 package org.gradle.api.internal.plugins;
 
+import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.internal.ConventionMapping;
 import org.gradle.api.internal.DynamicObjectAware;
 import org.gradle.api.internal.GeneratedSubclasses;
 import org.gradle.api.internal.IConventionAware;
+import org.gradle.api.internal.NamedDomainObjectContainerHasElementType;
 import org.gradle.api.plugins.Convention;
 import org.gradle.api.plugins.ExtensionAware;
 import org.gradle.api.plugins.ExtensionContainer;
@@ -28,6 +30,7 @@ import org.gradle.api.reflect.TypeOf;
 import org.gradle.internal.metaobject.DynamicObject;
 import org.gradle.internal.reflect.PublicTypeAnnotationDetector;
 
+import static org.gradle.api.reflect.TypeOf.parameterizedTypeOf;
 import static org.gradle.api.reflect.TypeOf.typeOf;
 import static org.gradle.internal.Cast.uncheckedCast;
 
@@ -111,8 +114,16 @@ public class DslObject implements DynamicObjectAware, ExtensionAware, IConventio
         if (publicType != null) {
             return uncheckedCast(publicType);
         }
-        if (object instanceof HasPublicType) {
+        if (object instanceof HasPublicType && !(object instanceof NamedDomainObjectContainerHasElementType)) {
+            // TODO emit deprecation warning
             return uncheckedCast(((HasPublicType) object).getPublicType());
+        }
+        if (object instanceof NamedDomainObjectContainerHasElementType) {
+            NamedDomainObjectContainerHasElementType<?> collection = uncheckedCast(object);
+            return uncheckedCast(parameterizedTypeOf(
+                new TypeOf<NamedDomainObjectContainer<?>>() {},
+                typeOf(collection.getType())
+            ));
         }
         return uncheckedCast(typeOf(defaultPublicType));
     }

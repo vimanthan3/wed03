@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,15 @@
  * limitations under the License.
  */
 
-package org.gradle.api.reflect;
+package org.gradle.api.internal;
+
+import org.gradle.api.NamedDomainObjectContainer;
 
 /**
- * Allows a scriptable object, such as a project extension, to declare its preferred public type.
+ * A named domain object container that exposes the base type of its elements.
  *
- * The public type of an object is the one exposed to statically-typed consumers, such as Kotlin build scripts, by default.
- *
- * @since 3.5
+ * @param <T> the base type of elements of this container
  */
-// TODO deprecate
-public interface HasPublicType {
-
-    /**
-     * Public type.
-     *
-     * @return this object's public type
-     */
-    TypeOf<?> getPublicType();
+public interface NamedDomainObjectContainerHasElementType<T> extends NamedDomainObjectContainer<T> {
+    Class<? extends T> getType();
 }

@@ -17,6 +17,7 @@
 package org.gradle.kotlin.dsl.integration
 
 import org.gradle.integtests.fixtures.RepoScriptBlockUtil
+import org.gradle.integtests.fixtures.versions.AndroidGradlePluginVersions
 import org.gradle.kotlin.dsl.fixtures.FoldersDsl
 import org.gradle.kotlin.dsl.fixtures.FoldersDslExpression
 import org.gradle.kotlin.dsl.fixtures.containsMultiLineString
@@ -615,25 +616,56 @@ class ProjectSchemaAccessorsIntegrationTest : AbstractPluginIntegrationTest() {
 
     @Test
     fun `can access NamedDomainObjectContainer extension content via generated accessor`() {
-        withBuildScript(
-            """
-
+        withBuildScript("""
             plugins {
                 java
                 `jvm-test-suite`
             }
-
             testing {
                 suites.test.get().useJUnitJupiter()
+                suites.test { useJUnit() }
+            }
+        """)
+        build("help")
+    }
 
-                suites.test {
-                    useJUnit()
+    @Test
+    fun `can access android build types via generated accessors`() {
+        assumeJava11OrHigher()
+        val androidGradlePluginVersion = AndroidGradlePluginVersions().getLatestOfMinor("7.1")
+        withBuildSrc {
+            existing("build.gradle.kts").appendText("""
+                ${RepoScriptBlockUtil.googleRepository(GradleDsl.KOTLIN)}
+                dependencies {
+                    implementation("com.android.application:com.android.application.gradle.plugin:$androidGradlePluginVersion")
+                }
+            """)
+            withFile("src/main/kotlin/my-android-convention.gradle.kts", """
+                plugins {
+                    id("com.android.application")
+                }
+                android {
+                    compileSdk = 30
+                    buildTypes {
+                        debug {}
+                        release {}
+                        create("staging") {}
+                    }
+                }
+            """)
+        }
+        withBuildScript("""
+            plugins {
+                id("my-android-convention")
+            }
+            android {
+                buildTypes {
+                    debug {}
+                    release {}
+                    staging {}
                 }
             }
-
-            """
-        )
-
+        """)
         build("help")
     }
 

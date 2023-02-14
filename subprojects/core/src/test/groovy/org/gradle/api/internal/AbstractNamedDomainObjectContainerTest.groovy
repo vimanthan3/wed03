@@ -248,6 +248,7 @@ class AbstractNamedDomainObjectContainerTest extends Specification {
         container.list2.prop == 'list2'
     }
 
+    // TODO WHY?
     def "has public type"() {
         expect:
         container.publicType == new TypeOf<NamedDomainObjectContainer<TestObject>>() {}

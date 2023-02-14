@@ -35,7 +35,7 @@ import javax.annotation.Nullable;
 import static org.gradle.api.reflect.TypeOf.parameterizedTypeOf;
 import static org.gradle.api.reflect.TypeOf.typeOf;
 
-public abstract class AbstractNamedDomainObjectContainer<T> extends DefaultNamedDomainObjectSet<T> implements NamedDomainObjectContainer<T>, HasPublicType {
+public abstract class AbstractNamedDomainObjectContainer<T> extends DefaultNamedDomainObjectSet<T> implements NamedDomainObjectContainer<T>, NamedDomainObjectContainerHasElementType<T>, HasPublicType {
 
     protected AbstractNamedDomainObjectContainer(Class<T> type, Instantiator instantiator, Namer<? super T> namer, CollectionCallbackActionDecorator callbackDecorator) {
         super(type, instantiator, namer, callbackDecorator);
@@ -99,6 +99,10 @@ public abstract class AbstractNamedDomainObjectContainer<T> extends DefaultNamed
 
     @Override
     public TypeOf<?> getPublicType() {
+        // TODO deprecation message?
+        if (true) {
+            throw new InternalError("BOOM");
+        }
         return parameterizedTypeOf(new TypeOf<NamedDomainObjectContainer<?>>() {}, typeOf(getType()));
     }
 

@@ -42,7 +42,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 
-public class TypedDomainObjectContainerWrapper<U> implements NamedDomainObjectContainer<U>, MethodMixIn, PropertyMixIn {
+public class TypedDomainObjectContainerWrapper<U> implements NamedDomainObjectContainer<U>, NamedDomainObjectContainerHasElementType<U>, MethodMixIn, PropertyMixIn {
     private final Class<U> type;
     private final AbstractPolymorphicDomainObjectContainer<? super U> parent;
     private final NamedDomainObjectSet<U> delegate;
@@ -51,6 +51,11 @@ public class TypedDomainObjectContainerWrapper<U> implements NamedDomainObjectCo
         this.parent = parent;
         this.type = type;
         this.delegate = parent.withType(type);
+    }
+
+    @Override
+    public Class<U> getType() {
+        return type;
     }
 
     @Override
