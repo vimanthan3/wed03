@@ -17,6 +17,7 @@ package org.gradle.testing.jacoco.plugins;
 
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.ExtensiblePolymorphicDomainObjectContainer;
+import org.gradle.api.Incubating;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -52,6 +53,7 @@ import org.gradle.testing.base.TestSuite;
 import org.gradle.testing.base.TestingExtension;
 import org.gradle.testing.jacoco.tasks.JacocoBase;
 import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification;
+import org.gradle.testing.jacoco.tasks.JacocoOfflineInstrumentation;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 
 import javax.inject.Inject;
@@ -71,6 +73,15 @@ public abstract class JacocoPlugin implements Plugin<Project> {
      * @since 3.4
      */
     public static final String DEFAULT_JACOCO_VERSION = "0.8.8";
+
+    /**
+     * The default directory where offline instrumented classes are generated.
+     *
+     * @since 8.2
+     */
+    @Incubating
+    public static final String DEFAULT_OFFLINE_INSTRUMENTED_CLASSES_DIR = "jacoco/instrumented-classes/";
+
     public static final String AGENT_CONFIGURATION_NAME = "jacocoAgent";
     public static final String ANT_CONFIGURATION_NAME = "jacocoAnt";
     public static final String PLUGIN_EXTENSION_NAME = "jacoco";
@@ -97,9 +108,9 @@ public abstract class JacocoPlugin implements Plugin<Project> {
 
         configureAgentDependencies(agent, extension);
         configureTaskClasspathDefaults(extension);
-        applyToDefaultTasks(extension);
+        applyToTestTasks(extension);
         configureJacocoReportsDefaults(extension);
-        addDefaultReportAndCoverageVerificationTasks(extension);
+        addDefaultJacocoTasks(extension);
         configureCoverageDataElementsVariants(project);
     }
 
@@ -179,7 +190,7 @@ public abstract class JacocoPlugin implements Plugin<Project> {
      *
      * @param extension the extension to apply Jacoco with
      */
-    private void applyToDefaultTasks(final JacocoPluginExtension extension) {
+    private void applyToTestTasks(final JacocoPluginExtension extension) {
         project.getTasks().withType(Test.class).configureEach(extension::applyTo);
     }
 
@@ -206,16 +217,32 @@ public abstract class JacocoPlugin implements Plugin<Project> {
      *
      * @param extension the extension describing the test task names
      */
-    private void addDefaultReportAndCoverageVerificationTasks(final JacocoPluginExtension extension) {
+    private void addDefaultJacocoTasks(final JacocoPluginExtension extension) {
         project.getPlugins().withType(JavaPlugin.class, javaPlugin -> {
             TestingExtension testing = project.getExtensions().getByType(TestingExtension.class);
             JvmTestSuite defaultTestSuite = testing.getSuites().withType(JvmTestSuite.class).getByName(JvmTestSuitePlugin.DEFAULT_TEST_SUITE_NAME);
             defaultTestSuite.getTargets().configureEach(target -> {
                 TaskProvider<Test> testTask = target.getTestTask();
+                addDefaultOfflineInstrumentationTask(testTask);
                 addDefaultReportTask(extension, testTask);
                 addDefaultCoverageVerificationTask(testTask);
             });
         });
+    }
+
+    private void addDefaultOfflineInstrumentationTask(final TaskProvider<? extends Task> testTaskProvider) {
+        TaskProvider<JacocoOfflineInstrumentation> instrumentationTaskProvider = project.getTasks().register(
+            "jacoco" + StringUtils.capitalize(testTaskProvider.getName()) + "OfflineInstrumentation",
+            JacocoOfflineInstrumentation.class,
+            instrumentationTask -> {
+                instrumentationTask.setGroup(LifecycleBasePlugin.VERIFICATION_GROUP);
+                instrumentationTask.setDescription(String.format("Generates offline instrumented classes for the %s task.", testTaskProvider.getName()));
+                instrumentationTask.sourceSets(project.getExtensions().getByType(SourceSetContainer.class).getByName("main"));
+                instrumentationTask.getOutputDir().convention(project.getLayout().getBuildDirectory().dir(DEFAULT_OFFLINE_INSTRUMENTED_CLASSES_DIR + testTaskProvider.getName()));
+                instrumentationTask.onlyIf(t -> testTaskProvider.get().getExtensions().getByType(JacocoTaskExtension.class).getOffline().get());
+            });
+
+        testTaskProvider.configure(testTask -> testTask.getExtensions().getByType(JacocoTaskExtension.class).getOfflineInstrumentedClasses().from(instrumentationTaskProvider));
     }
 
     private void addDefaultReportTask(final JacocoPluginExtension extension, final TaskProvider<? extends Task> testTaskProvider) {
