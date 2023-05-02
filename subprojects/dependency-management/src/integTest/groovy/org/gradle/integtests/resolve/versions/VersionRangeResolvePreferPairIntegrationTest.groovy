@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 the original author or authors.
+ * Copyright 2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package org.gradle.integtests.resolve
+package org.gradle.integtests.resolve.versions
 
 import org.gradle.integtests.fixtures.executer.GradleContextualExecuter
+import org.gradle.integtests.resolve.AbstractVersionRangeResolveIntegrationTest
 import org.gradle.resolve.scenarios.VersionRangeResolveTestScenarios
 import spock.lang.IgnoreIf
 
@@ -26,8 +27,8 @@ import spock.lang.IgnoreIf
     // embedded mode
     !GradleContextualExecuter.embedded
 })
-class VersionRangeResolvePairIntegrationTest extends AbstractVersionRangeResolveIntegrationTest {
-    def "resolve pair #permutation"() {
+class VersionRangeResolvePreferPairIntegrationTest extends AbstractVersionRangeResolveIntegrationTest {
+    def "resolve prefer pair #permutation"() {
         given:
         def candidates = permutation.candidates
         def expectedSingle = permutation.expectedSingle
@@ -37,6 +38,6 @@ class VersionRangeResolvePairIntegrationTest extends AbstractVersionRangeResolve
         checkScenarioResolution(expectedSingle, expectedMulti, candidates)
 
         where:
-        permutation << VersionRangeResolveTestScenarios.SCENARIOS_TWO_DEPENDENCIES
+        permutation << VersionRangeResolveTestScenarios.SCENARIOS_PREFER
     }
 }
