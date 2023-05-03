@@ -79,4 +79,9 @@ public interface JavaToolchainService {
     Provider<JlinkTool> jlinkToolFor(Action<? super JavaToolchainSpec> config);
 
     Provider<JlinkTool> jlinkToolFor(JavaToolchainSpec spec);
+
+    Provider<JvmTool> jvmToolFor(String toolName, Action<? super JavaToolchainSpec> config);
+
+    Provider<JvmTool> jvmToolFor(String toolName, JavaToolchainSpec spec);
+
 }

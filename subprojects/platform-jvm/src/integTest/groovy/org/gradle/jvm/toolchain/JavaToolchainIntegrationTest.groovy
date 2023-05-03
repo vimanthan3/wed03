@@ -111,6 +111,34 @@ class JavaToolchainIntegrationTest extends AbstractIntegrationSpec implements Ja
         current = (isCurrentJvm ? "current" : "non-current")
     }
 
+    def "identify whether custom tool toolchain corresponds to the #current JVM"() {
+        def jdkMetadata = AvailableJavaHomes.getJvmInstallationMetadata(jvm as Jvm)
+
+        buildScript """
+            apply plugin: "java"
+
+            def tool = javaToolchains.jvmToolFor("jar") {
+                languageVersion = JavaLanguageVersion.of(${jdkMetadata.languageVersion.majorVersion})
+            }.get()
+
+            println("Toolchain isCurrentJvm=" + tool.metadata.isCurrentJvm())
+        """
+
+        when:
+        withInstallations(jdkMetadata).run ':help'
+
+        then:
+        outputContains("Toolchain isCurrentJvm=${isCurrentJvm}")
+
+        where:
+        isCurrentJvm | jvm
+        true         | Jvm.current()
+        false        | AvailableJavaHomes.differentVersion
+
+        and:
+        current = (isCurrentJvm ? "current" : "non-current")
+    }
+
     def "fails when trying to change java extension toolchain spec property after it has been used to resolve a toolchain"() {
         def jdkMetadata1 = AvailableJavaHomes.getJvmInstallationMetadata(Jvm.current())
         def jdkMetadata2 = AvailableJavaHomes.getJvmInstallationMetadata(AvailableJavaHomes.differentVersion)

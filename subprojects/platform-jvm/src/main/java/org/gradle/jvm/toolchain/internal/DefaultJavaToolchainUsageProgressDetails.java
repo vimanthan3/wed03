@@ -25,18 +25,23 @@ import org.gradle.jvm.toolchain.internal.operations.JavaToolchainUsageProgressDe
 
 public class DefaultJavaToolchainUsageProgressDetails implements JavaToolchainUsageProgressDetails {
 
-    private final JavaTool toolName;
+    private final String toolName;
 
     private final JvmInstallationMetadata toolchainMetadata;
 
     public DefaultJavaToolchainUsageProgressDetails(JavaTool toolName, JvmInstallationMetadata toolchainMetadata) {
+        this.toolName = toolName.getToolName();
+        this.toolchainMetadata = toolchainMetadata;
+    }
+
+    public DefaultJavaToolchainUsageProgressDetails(String toolName, JvmInstallationMetadata toolchainMetadata) {
         this.toolName = toolName;
         this.toolchainMetadata = toolchainMetadata;
     }
 
     @Override
     public String getToolName() {
-        return toolName.getToolName();
+        return toolName;
     }
 
     @Override
