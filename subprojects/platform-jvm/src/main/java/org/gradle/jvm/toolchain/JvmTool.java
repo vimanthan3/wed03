@@ -16,5 +16,25 @@
 
 package org.gradle.jvm.toolchain;
 
-public interface JlinkTool extends JvmTool {
+import org.gradle.api.file.RegularFile;
+import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.Nested;
+
+public interface JvmTool {
+
+    /**
+     * Returns metadata information about this tool
+     *
+     * @return the tool metadata
+     */
+    @Nested
+    JavaInstallationMetadata getMetadata();
+
+    /**
+     * Returns the path to the executable for this tool
+     *
+     * @return the path to the executable
+     */
+    @Internal
+    RegularFile getExecutablePath();
 }
