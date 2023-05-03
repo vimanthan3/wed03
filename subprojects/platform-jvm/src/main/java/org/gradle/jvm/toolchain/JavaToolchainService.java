@@ -75,4 +75,8 @@ public interface JavaToolchainService {
      * @return A {@code Provider<JavadocTool>}
      */
     Provider<JavadocTool> javadocToolFor(JavaToolchainSpec spec);
+
+    Provider<JlinkTool> jlinkToolFor(Action<? super JavaToolchainSpec> config);
+
+    Provider<JlinkTool> jlinkToolFor(JavaToolchainSpec spec);
 }

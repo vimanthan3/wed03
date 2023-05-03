@@ -25,6 +25,7 @@ import org.gradle.jvm.toolchain.JavaLauncher;
 import org.gradle.jvm.toolchain.JavaToolchainService;
 import org.gradle.jvm.toolchain.JavaToolchainSpec;
 import org.gradle.jvm.toolchain.JavadocTool;
+import org.gradle.jvm.toolchain.JlinkTool;
 import org.gradle.jvm.toolchain.internal.DefaultJavaToolchainUsageProgressDetails.JavaTool;
 
 import javax.inject.Inject;
@@ -86,6 +87,18 @@ public class DefaultJavaToolchainService implements JavaToolchainService {
         return queryService.findMatchingToolchain(spec)
             .withSideEffect(toolchain -> emitEvent(toolchain, JavaTool.JAVADOC))
             .map(javaToolchain -> toolFactory.create(JavadocTool.class, javaToolchain));
+    }
+
+    @Override
+    public Provider<JlinkTool> jlinkToolFor(Action<? super JavaToolchainSpec> config) {
+        return jlinkToolFor(configureToolchainSpec(config));
+    }
+
+    @Override
+    public Provider<JlinkTool> jlinkToolFor(JavaToolchainSpec spec) {
+        return queryService.findMatchingToolchain(spec)
+            .withSideEffect(toolchain -> emitEvent(toolchain, JavaTool.JLINK))
+            .map(DefaultToolchainJlinkTool::new);
     }
 
     private DefaultToolchainSpec configureToolchainSpec(Action<? super JavaToolchainSpec> config) {
