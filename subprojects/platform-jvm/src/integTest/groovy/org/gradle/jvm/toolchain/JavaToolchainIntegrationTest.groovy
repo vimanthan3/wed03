@@ -103,6 +103,8 @@ class JavaToolchainIntegrationTest extends AbstractIntegrationSpec implements Ja
         "launcher"    | false        | AvailableJavaHomes.differentVersion
         "javadocTool" | true         | Jvm.current()
         "javadocTool" | false        | AvailableJavaHomes.differentVersion
+        "jlinkTool" | true         | Jvm.current()
+        "jlinkTool" | false        | AvailableJavaHomes.differentVersion
 
         and:
         toolMethod = "${tool}For"
