@@ -30,11 +30,10 @@ public class DefaultJavaToolchainUsageProgressDetails implements JavaToolchainUs
     private final JvmInstallationMetadata toolchainMetadata;
 
     public DefaultJavaToolchainUsageProgressDetails(JavaTool toolName, JvmInstallationMetadata toolchainMetadata) {
-        this.toolName = toolName.getToolName();
-        this.toolchainMetadata = toolchainMetadata;
+        this(toolName.getToolName(), toolchainMetadata);
     }
 
-    public DefaultJavaToolchainUsageProgressDetails(String toolName, JvmInstallationMetadata toolchainMetadata) {
+    DefaultJavaToolchainUsageProgressDetails(String toolName, JvmInstallationMetadata toolchainMetadata) {
         this.toolName = toolName;
         this.toolchainMetadata = toolchainMetadata;
     }
