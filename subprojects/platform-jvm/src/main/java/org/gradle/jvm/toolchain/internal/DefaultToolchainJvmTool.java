@@ -16,29 +16,28 @@
 
 package org.gradle.jvm.toolchain.internal;
 
-import com.google.common.base.Preconditions;
 import org.gradle.api.file.RegularFile;
 import org.gradle.jvm.toolchain.JavaInstallationMetadata;
-import org.gradle.jvm.toolchain.JlinkTool;
 import org.gradle.jvm.toolchain.JvmTool;
 
-public final class DefaultToolchainJlinkTool implements JlinkTool {
+public final class DefaultToolchainJvmTool implements JvmTool {
 
-    private final JvmTool jvmTool;
+    private final JavaToolchain javaToolchain;
 
-    public DefaultToolchainJlinkTool(JavaToolchain javaToolchain) {
-        Preconditions.checkArgument(javaToolchain.getLanguageVersion().asInt() >= 9, "jlink is only available on JDK 9 and above");
-        this.jvmTool = new DefaultToolchainJvmTool(javaToolchain, "jlink");
+    private final String toolName;
 
+    public DefaultToolchainJvmTool(JavaToolchain javaToolchain, String toolName) {
+        this.javaToolchain = javaToolchain;
+        this.toolName = toolName;
     }
 
     @Override
     public JavaInstallationMetadata getMetadata() {
-        return jvmTool.getMetadata();
+        return javaToolchain;
     }
 
     @Override
     public RegularFile getExecutablePath() {
-        return jvmTool.getExecutablePath();
+        return javaToolchain.findExecutable(toolName);
     }
 }
