@@ -76,8 +76,20 @@ public interface JavaToolchainService {
      */
     Provider<JavadocTool> javadocToolFor(JavaToolchainSpec spec);
 
+    /**
+     * Obtain a {@link JlinkTool} matching the {@link JavaToolchainSpec}, as configured by the provided action.
+     *
+     * @param config The configuration of the {@code JavaToolchainSpec}
+     * @return A {@code Provider<JlinkTool>}
+     */
     Provider<JlinkTool> jlinkToolFor(Action<? super JavaToolchainSpec> config);
 
+    /**
+     * Obtain a {@link JlinkTool} matching the {@link JavaToolchainSpec}.
+     *
+     * @param spec The {@code JavaToolchainSpec}
+     * @return A {@code Provider<JlinkTool>}
+     */
     Provider<JlinkTool> jlinkToolFor(JavaToolchainSpec spec);
 
     Provider<JvmTool> jvmToolFor(String toolName, Action<? super JavaToolchainSpec> config);
