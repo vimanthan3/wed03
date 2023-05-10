@@ -5,6 +5,7 @@ import com.alibaba.fastjson.annotation.JSONField
 import common.functionalTestExtraParameters
 import jetbrains.buildServer.configs.kotlin.v2019_2.BuildSteps
 import jetbrains.buildServer.configs.kotlin.v2019_2.buildFeatures.parallelTests
+import jetbrains.buildServer.configs.kotlin.v2019_2.triggers.retryBuild
 import model.CIBuildModel
 import model.Stage
 import model.StageName
@@ -85,6 +86,14 @@ class FunctionalTest(
         extraSteps = extraBuildSteps,
         preSteps = preBuildSteps
     )
+
+
+    triggers {
+        retryBuild {
+            attempts = 1
+            retryWithTheSameRevisions = true
+        }
+    }
 
     failureConditions {
         // JavaExecDebugIntegrationTest.debug session fails without debugger might cause JVM crash
