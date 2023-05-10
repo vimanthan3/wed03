@@ -16,7 +16,6 @@
 
 import com.gradle.enterprise.gradleplugin.testdistribution.TestDistributionExtension
 import com.gradle.enterprise.gradleplugin.testdistribution.internal.TestDistributionExtensionInternal
-import com.gradle.enterprise.gradleplugin.testretry.retry
 import com.gradle.enterprise.gradleplugin.testselection.PredictiveTestSelectionExtension
 import com.gradle.enterprise.gradleplugin.testselection.internal.PredictiveTestSelectionExtensionInternal
 import gradlebuild.basics.BuildEnvironment
@@ -277,10 +276,6 @@ fun configureTests() {
 
         if (BuildEnvironment.isCiServer) {
             configureRerun()
-            retry {
-                maxRetries.convention(determineMaxRetries())
-                maxFailures = determineMaxFailures()
-            }
             doFirst {
                 logger.lifecycle("maxParallelForks for '$path' is $maxParallelForks")
             }
