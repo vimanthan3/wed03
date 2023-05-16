@@ -904,7 +904,7 @@ class ValidatePluginsIntegrationTest extends AbstractPluginValidationIntegration
     @ValidationTestFor(
         ValidationProblemId.NESTED_TYPE_UNSUPPORTED
     )
-    def "nested #typeName#parameterType is validated with deprecation warning"() {
+    def "nested #type#parameterType is validated with deprecation warning"() {
         javaTaskSource << """
             import org.gradle.api.*;
             import org.gradle.api.provider.*;
