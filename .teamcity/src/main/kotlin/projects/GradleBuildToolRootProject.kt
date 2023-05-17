@@ -21,7 +21,12 @@ class GradleBuildToolRootProject() : Project({
             gradle {
                 tasks = ":plugin-development:configCacheIntegTest --tests ValidatePluginsIntegrationTest"
                 useGradleWrapper = true
+
             }
         }
+
+        artifactRules = """
+                subprojects/plugin-development/build/reports/tests/ => artifacts/tests
+            """.trimIndent()
     }
 })
