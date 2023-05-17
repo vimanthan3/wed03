@@ -1,4 +1,3 @@
-import common.VersionedSettingsBranch
 import jetbrains.buildServer.configs.kotlin.v2019_2.project
 import jetbrains.buildServer.configs.kotlin.v2019_2.version
 import projects.GradleBuildToolRootProject
@@ -37,4 +36,4 @@ Release (buildTypeId: Gradle_Release)
          |----- WarmupEc2Agent
          |----- AdHocPerformanceTest
  */
-project(GradleBuildToolRootProject(VersionedSettingsBranch.fromDslContext()))
+project(GradleBuildToolRootProject())
