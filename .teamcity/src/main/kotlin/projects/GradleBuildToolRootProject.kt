@@ -14,6 +14,9 @@ class GradleBuildToolRootProject() : Project({
         requirements {
             contains("teamcity.agent.jvm.os.name", "Linux")
         }
+        vcs {
+            root(DslContext.settingsRootId)
+        }
         steps {
             gradle {
                 tasks = ":plugin-development:configCacheIntegTest --tests ValidatePluginsIntegrationTest"
