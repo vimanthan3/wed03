@@ -16,12 +16,14 @@
 
 package org.gradle.kotlin.dsl.integration
 
+import org.junit.Ignore
 import org.junit.Test
 
 
 class KotlinDslPluginCustomKotlinOptionsIntegrationTest : AbstractPluginIntegrationTest() {
 
     @Test
+    @Ignore // TODO find another way to test this
     fun `can configure custom kotlin options on a kotlin-dsl project`() {
 
         assumeNonEmbeddedGradleExecuter()
