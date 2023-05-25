@@ -34,8 +34,8 @@ abstract class KotlinDslStandaloneScriptCompilationConfiguration protected const
 
     isStandalone(true)
     compilerOptions.put(listOf(
-        "-language-version", "1.8",
-        "-api-version", "1.8",
+        "-language-version", "1.9",
+        "-api-version", "1.9",
         "-Xjvm-default=all",
         "-Xjsr305=strict",
         "-XXLanguage:+DisableCompatibilityModeForNewInference",
