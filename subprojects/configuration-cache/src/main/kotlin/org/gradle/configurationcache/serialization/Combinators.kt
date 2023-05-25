@@ -87,7 +87,7 @@ fun <T> codec(
     encode: suspend WriteContext.(T) -> Unit,
     decode: suspend ReadContext.() -> T?
 ): Codec<T> = object : Codec<T> {
-    override suspend fun WriteContext.encode(value: T) = encode(value)
+    override suspend fun WriteContext.encode(value: T): Unit = encode(value)
     override suspend fun ReadContext.decode(): T? = decode()
 }
 
