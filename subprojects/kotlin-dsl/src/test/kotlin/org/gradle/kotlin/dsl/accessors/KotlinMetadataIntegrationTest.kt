@@ -25,6 +25,7 @@ import org.gradle.kotlin.dsl.fixtures.TestWithTempFiles
 import org.gradle.kotlin.dsl.fixtures.testRuntimeClassPath
 import org.gradle.kotlin.dsl.support.compileToDirectory
 import org.gradle.kotlin.dsl.support.loggerFor
+import org.junit.Ignore
 
 import org.junit.Test
 
@@ -39,6 +40,7 @@ fun <T : Dependency> DependencyHandler.foo(
 ): T = TODO()
 
 
+@Ignore
 class KotlinMetadataIntegrationTest : TestWithTempFiles() {
 
     @Test

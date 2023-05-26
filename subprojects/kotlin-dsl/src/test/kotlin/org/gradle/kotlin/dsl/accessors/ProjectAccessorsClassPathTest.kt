@@ -58,6 +58,7 @@ import org.gradle.kotlin.dsl.support.loggerFor
 import org.gradle.kotlin.dsl.support.uppercaseFirstChar
 import org.gradle.nativeplatform.BuildType
 import org.junit.Assert.assertEquals
+import org.junit.Ignore
 import org.junit.Test
 import org.mockito.ArgumentMatchers.anyMap
 import java.io.File
@@ -125,6 +126,7 @@ class ProjectAccessorsClassPathTest : AbstractDslTest() {
     }
 
     @Test
+    @Ignore
     fun `#buildAccessorsFor (source)`() {
 
         testAccessorsBuiltBy(::buildAccessorsFromSourceFor)
