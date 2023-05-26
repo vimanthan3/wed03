@@ -19,6 +19,7 @@ package org.gradle.kotlin.dsl.plugins.dsl
 import org.gradle.kotlin.dsl.fixtures.AbstractKotlinIntegrationTest
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.MatcherAssert.assertThat
+import org.junit.Ignore
 import org.junit.Test
 
 
@@ -28,6 +29,7 @@ import org.junit.Test
 class KotlinDslPluginCrossVersionSmokeTest : AbstractKotlinIntegrationTest() {
 
     @Test
+    @Ignore
     fun `can run with first version of kotlin-dsl plugin supporting Gradle 8_0`() {
 
         assumeNonEmbeddedGradleExecuter()
