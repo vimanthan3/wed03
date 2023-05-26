@@ -81,7 +81,7 @@ class ConfigurationCacheEnvironment(
 open class DefaultEnvironment : Environment {
 
     override fun propertiesFile(propertiesFile: File): Map<String, String>? = when {
-        propertiesFile.isFile -> GUtil.loadProperties(propertiesFile).uncheckedCast()
+        propertiesFile.isFile -> GUtil.loadProperties(propertiesFile).uncheckedCast<Map<String, String>>()
         else -> null
     }
 
