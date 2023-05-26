@@ -333,10 +333,10 @@ class TaskContainerDslIntegrationTest : AbstractKotlinIntegrationTest() {
         // For cases not exercised by delegated properties
         tasks["bar"].description += "A"
         tasks.create<Copy>("cabin")
-        tasks.create<Copy>("valley").description += "!"
+        tasks.maybeCreate("valley", Copy::class.java).description += "!"
         tasks["pipistrelle"].description += "A"
         tasks.create<Copy>("quartern")
-        tasks.create<Copy>("koto").description += "!"
+        tasks.maybeCreate("koto", Copy::class.java).description += "!"
     }
 
     @Test
