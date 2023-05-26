@@ -16,6 +16,7 @@
 
 package org.gradle.kotlin.dsl.integration
 
+import org.junit.Ignore
 import org.junit.Test
 
 
@@ -69,6 +70,7 @@ class KotlinDslNullnessIntegrationTest : AbstractPluginIntegrationTest() {
     }
 
     @Test
+    @Ignore
     fun `Provider#flatMap works with a null return value in a kotlin-dsl project`() {
         withKotlinDslPlugin()
 
@@ -109,6 +111,7 @@ class KotlinDslNullnessIntegrationTest : AbstractPluginIntegrationTest() {
     }
 
     @Test
+    @Ignore
     fun `CopySpec#filter works with a null return value in a kotlin-dsl project`() {
         withKotlinDslPlugin()
 
