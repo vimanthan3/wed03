@@ -49,9 +49,10 @@ class NonNullExtraPropertyDelegate(
     private val name: String
 ) : MutablePropertyDelegate {
 
+    @Suppress("UNCHECKED_CAST")
     override fun <T> getValue(receiver: Any?, property: KProperty<*>): T =
         if (!extra.has(name)) cannotGetExtraProperty("does not exist")
-        else uncheckedCast(extra.get(name) ?: cannotGetExtraProperty("is null"))
+        else extra.get(name) as T ?: cannotGetExtraProperty("is null")
 
     override fun <T> setValue(receiver: Any?, property: KProperty<*>, value: T) =
         extra.set(property.name, value)
