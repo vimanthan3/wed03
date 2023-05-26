@@ -38,6 +38,7 @@ abstract class KotlinDslStandaloneScriptCompilationConfiguration protected const
         "-api-version", "2.0",
         "-Xjvm-default=all",
         "-Xjsr305=strict",
+        "-Xallow-unstable-dependencies",
         "-XXLanguage:+DisableCompatibilityModeForNewInference",
         "-XXLanguage:-TypeEnhancementImprovementsInStrictMode",
     ))

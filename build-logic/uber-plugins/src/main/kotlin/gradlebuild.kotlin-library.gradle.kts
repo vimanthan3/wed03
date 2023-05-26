@@ -85,6 +85,7 @@ fun KotlinCompile.configureKotlinCompilerForGradleBuild() {
             "-java-parameters",
             "-Xsam-conversions=class",
             "-Xskip-metadata-version-check",
+            "-Xallow-unstable-dependencies",
         )
     }
 }

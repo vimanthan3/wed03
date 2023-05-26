@@ -26,6 +26,7 @@ object KotlinDslPluginSupport {
             "-Xjsr305=strict",
             "-Xsam-conversions=class",
             "-Xskip-prerelease-check",
+            "-Xallow-unstable-dependencies",
             "-XXLanguage:+DisableCompatibilityModeForNewInference",
             "-XXLanguage:-TypeEnhancementImprovementsInStrictMode",
         )
