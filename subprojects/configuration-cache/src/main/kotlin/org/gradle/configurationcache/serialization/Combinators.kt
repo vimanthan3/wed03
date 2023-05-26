@@ -48,10 +48,10 @@ internal
 inline fun <reified T : Any> unsupported(
     documentationSection: DocumentationSection = DocumentationSection.RequirementsDisallowedTypes
 ): Codec<T> = codec(
-    encode = { value ->
+    doEncode = { value ->
         logUnsupported("serialize", T::class, value.javaClass, documentationSection)
     },
-    decode = {
+    doDecode = {
         logUnsupported("deserialize", T::class, documentationSection)
         null
     }
@@ -72,10 +72,10 @@ inline fun <reified T : Any> unsupported(
     documentationSection: DocumentationSection = DocumentationSection.RequirementsDisallowedTypes,
     noinline unsupportedMessage: StructuredMessageBuilder
 ): Codec<T> = codec(
-    encode = {
+    doEncode = {
         logUnsupported("serialize", documentationSection, unsupportedMessage)
     },
-    decode = {
+    doDecode = {
         logUnsupported("deserialize", documentationSection, unsupportedMessage)
         null
     }
@@ -84,11 +84,11 @@ inline fun <reified T : Any> unsupported(
 
 internal
 fun <T> codec(
-    encode: suspend WriteContext.(T) -> Unit,
-    decode: suspend ReadContext.() -> T?
+    doEncode: suspend WriteContext.(T) -> Unit,
+    doDecode: suspend ReadContext.() -> T?
 ): Codec<T> = object : Codec<T> {
-    override suspend fun WriteContext.encode(value: T): Unit = encode(value)
-    override suspend fun ReadContext.decode(): T? = decode()
+    override suspend fun WriteContext.encode(value: T): Unit = doEncode(value)
+    override suspend fun ReadContext.decode(): T? = doDecode()
 }
 
 
