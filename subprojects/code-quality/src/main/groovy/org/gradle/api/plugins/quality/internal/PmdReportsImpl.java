@@ -32,6 +32,9 @@ public class PmdReportsImpl extends TaskReportContainer<SingleFileReport> implem
 
         add(TaskGeneratedSingleFileReport.class, "html", task);
         add(TaskGeneratedSingleFileReport.class, "xml", task);
+        add(TaskGeneratedSingleFileReport.class, "csv", task);
+        add(TaskGeneratedSingleFileReport.class, "codeclimate.json", task);
+        add(TaskGeneratedSingleFileReport.class, "sarif.json", task);
     }
 
     @Override
@@ -42,5 +45,20 @@ public class PmdReportsImpl extends TaskReportContainer<SingleFileReport> implem
     @Override
     public SingleFileReport getXml() {
         return getByName("xml");
+    }
+
+    @Override
+    public SingleFileReport getCsv() {
+        return getByName("csv");
+    }
+
+    @Override
+    public SingleFileReport getCodeClimate() {
+        return getByName("codeclimate.json");
+    }
+
+    @Override
+    public SingleFileReport getSarif() {
+        return getByName("sarif.json");
     }
 }

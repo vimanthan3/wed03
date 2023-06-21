@@ -175,6 +175,9 @@ class PmdPluginVersionIntegrationTest extends AbstractPmdPluginVersionIntegratio
                 reports {
                     xml.required = false
                     html.outputLocation = file("htmlReport.html")
+                    csv.outputLocation = file("csvReport.csv")
+                    codeClimate.outputLocation = file("codeClimateReport.json")
+                    sarif.outputLocation = file("sarifReport.json")
                 }
             }
         """
@@ -183,6 +186,9 @@ class PmdPluginVersionIntegrationTest extends AbstractPmdPluginVersionIntegratio
         succeeds("check")
         !file("build/reports/pmd/main.xml").exists()
         file("htmlReport.html").exists()
+        file("csvReport.csv").exists()
+        file("codeClimateReport.json").exists()
+        file("sarifReport.json").exists()
     }
 
     def "use custom rule set files"() {
