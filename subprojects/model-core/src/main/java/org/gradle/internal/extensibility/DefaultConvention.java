@@ -71,7 +71,8 @@ public class DefaultConvention implements org.gradle.api.plugins.Convention, Ext
         if (plugins == null) {
             plugins = Maps.newLinkedHashMap();
         }
-        return new ConventionPluginsMap(plugins);
+        logConventionRegistrationDeprecation();
+        return plugins;
     }
 
     @Override
@@ -97,7 +98,7 @@ public class DefaultConvention implements org.gradle.api.plugins.Convention, Ext
     @Deprecated
     @Override
     public <T> T findPlugin(Class<T> type) throws IllegalStateException {
-        logConventionDeprecation();
+        logConventionAccessDeprecation();
         if (plugins == null) {
             return null;
         }
@@ -248,7 +249,7 @@ public class DefaultConvention implements org.gradle.api.plugins.Convention, Ext
             }
             for (Object object : plugins.values()) {
                 if (asDynamicObject(object).hasProperty(name)) {
-                    logConventionDeprecation();
+                    logConventionAccessDeprecation();
                     return true;
                 }
             }
@@ -282,7 +283,7 @@ public class DefaultConvention implements org.gradle.api.plugins.Convention, Ext
                 DynamicObject dynamicObject = asDynamicObject(object).withNotImplementsMissing();
                 DynamicInvokeResult result = dynamicObject.tryGetProperty(name);
                 if (result.isFound()) {
-                    logConventionDeprecation();
+                    logConventionAccessDeprecation();
                     return result;
                 }
             }
@@ -303,7 +304,7 @@ public class DefaultConvention implements org.gradle.api.plugins.Convention, Ext
                 BeanDynamicObject dynamicObject = asDynamicObject(object).withNotImplementsMissing();
                 DynamicInvokeResult result = dynamicObject.trySetProperty(name, value);
                 if (result.isFound()) {
-                    logConventionDeprecation();
+                    logConventionAccessDeprecation();
                     return result;
                 }
             }
@@ -326,7 +327,7 @@ public class DefaultConvention implements org.gradle.api.plugins.Convention, Ext
                 BeanDynamicObject dynamicObject = asDynamicObject(object).withNotImplementsMissing();
                 DynamicInvokeResult result = dynamicObject.tryInvokeMethod(name, args);
                 if (result.isFound()) {
-                    logConventionDeprecation();
+                    logConventionAccessDeprecation();
                     return result;
                 }
             }
@@ -348,7 +349,7 @@ public class DefaultConvention implements org.gradle.api.plugins.Convention, Ext
             for (Object object : plugins.values()) {
                 BeanDynamicObject dynamicObject = asDynamicObject(object);
                 if (dynamicObject.hasMethod(name, args)) {
-                    logConventionDeprecation();
+                    logConventionAccessDeprecation();
                     return true;
                 }
             }
@@ -391,10 +392,17 @@ public class DefaultConvention implements org.gradle.api.plugins.Convention, Ext
         return extensionsStorage.configureExtension(name, action);
     }
 
-    private static void logConventionDeprecation() {
+    private static void logConventionAccessDeprecation() {
         DeprecationLogger.deprecateType(org.gradle.api.plugins.Convention.class)
             .willBeRemovedInGradle9()
             .withUpgradeGuideSection(8, "deprecated_access_to_conventions")
+            .nagUser();
+    }
+
+    private static void logConventionRegistrationDeprecation() {
+        DeprecationLogger.deprecateType(org.gradle.api.plugins.Convention.class)
+            .willBeRemovedInGradle9()
+            .withUpgradeGuideSection(8, "deprecated_registering_conventions")
             .nagUser();
     }
 
@@ -414,81 +422,81 @@ public class DefaultConvention implements org.gradle.api.plugins.Convention, Ext
         @Nullable
         @Override
         public Object get(@Nullable Object key) {
-            logConventionDeprecation();
+            logConventionAccessDeprecation();
             return super.get(key);
         }
 
         @Override
         public Object getOrDefault(Object key, Object defaultValue) {
-            logConventionDeprecation();
+            logConventionAccessDeprecation();
             return super.getOrDefault(key, defaultValue);
         }
 
         @Nullable
         @Override
         public Object remove(@Nullable Object key) {
-            logConventionDeprecation();
+            logConventionAccessDeprecation();
             return super.remove(key);
         }
 
         @Override
         public boolean remove(Object key, Object value) {
-            logConventionDeprecation();
+            logConventionAccessDeprecation();
             return super.remove(key, value);
         }
 
         @Override
         public void forEach(BiConsumer<? super String, ? super Object> action) {
-            logConventionDeprecation();
+            logConventionAccessDeprecation();
             super.forEach(action);
         }
 
         @Nullable
         @Override
         public Object replace(String key, Object value) {
-            logConventionDeprecation();
+            logConventionAccessDeprecation();
             return super.replace(key, value);
         }
 
         @Override
         public void replaceAll(BiFunction<? super String, ? super Object, ?> function) {
-            logConventionDeprecation();
+            logConventionAccessDeprecation();
             super.replaceAll(function);
         }
 
         @Override
         public void clear() {
-            logConventionDeprecation();
+            logConventionAccessDeprecation();
             super.clear();
         }
 
         @Override
         public boolean containsKey(@Nullable Object key) {
-            logConventionDeprecation();
+            logConventionAccessDeprecation();
             return super.containsKey(key);
         }
 
         @Override
         public boolean containsValue(@Nullable Object value) {
-            logConventionDeprecation();
+            logConventionAccessDeprecation();
             return super.containsValue(value);
         }
 
         @Override
         public Set<String> keySet() {
-            logConventionDeprecation();
+            logConventionAccessDeprecation();
             return super.keySet();
         }
 
         @Override
         public Set<Entry<String, Object>> entrySet() {
-            logConventionDeprecation();
+            logConventionAccessDeprecation();
             return super.entrySet();
         }
 
         @Override
         public Collection<Object> values() {
-            logConventionDeprecation();
+            logConventionAccessDeprecation();
             return super.values();
         }
     }
