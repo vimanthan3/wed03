@@ -52,6 +52,7 @@ import org.jetbrains.kotlin.config.JVMConfigurationKeys.JVM_TARGET
 import org.jetbrains.kotlin.config.JVMConfigurationKeys.OUTPUT_DIRECTORY
 import org.jetbrains.kotlin.config.JVMConfigurationKeys.RETAIN_OUTPUT_IN_MEMORY
 import org.jetbrains.kotlin.config.JVMConfigurationKeys.SAM_CONVERSIONS
+import org.jetbrains.kotlin.config.JVMConfigurationKeys.USE_FAST_JAR_FILE_SYSTEM
 import org.jetbrains.kotlin.config.JvmAnalysisFlags
 import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.JvmDefaultMode
@@ -360,6 +361,7 @@ fun compilerConfigurationFor(messageCollector: MessageCollector, jvmTarget: Java
         put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, messageCollector)
         put(JVM_TARGET, jvmTarget.toKotlinJvmTarget())
         put(JDK_HOME, File(System.getProperty("java.home")))
+        put(USE_FAST_JAR_FILE_SYSTEM, true)
         put(IR, true)
         put(SAM_CONVERSIONS, JvmClosureGenerationScheme.CLASS)
         addJvmSdkRoots(PathUtil.getJdkClassesRootsFromCurrentJre())
@@ -545,6 +547,13 @@ class LoggingMessageCollector(
     private val pathTranslation: (String) -> String,
 ) : MessageCollector {
 
+    companion object {
+        private
+        val silencedMessages = listOf(
+            "Using new faster version of JAR FS: it should make your build faster, but the new implementation is experimental"
+        )
+    }
+
     val errors = arrayListOf<ScriptCompilationError>()
 
     override fun hasErrors() = errors.isNotEmpty()
@@ -552,6 +561,10 @@ class LoggingMessageCollector(
     override fun clear() = errors.clear()
 
     override fun report(severity: CompilerMessageSeverity, message: String, location: CompilerMessageSourceLocation?) {
+
+        if (message in silencedMessages) {
+            return
+        }
 
         fun msg() =
             location?.run {
