@@ -98,9 +98,12 @@ import org.gradle.api.internal.initialization.ResettableConfiguration;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.internal.project.ProjectState;
 import org.gradle.api.internal.project.ProjectStateRegistry;
+import org.gradle.api.internal.provider.DefaultProperty;
 import org.gradle.api.internal.provider.DefaultProvider;
+import org.gradle.api.internal.provider.PropertyHost;
 import org.gradle.api.internal.tasks.TaskDependencyFactory;
 import org.gradle.api.internal.tasks.TaskDependencyResolveContext;
+import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.specs.Specs;
@@ -313,6 +316,7 @@ public abstract class DefaultConfiguration extends AbstractFileCollection implem
         this.intrinsicFiles = fileCollectionFromSpec(Specs.satisfyAll());
         this.exceptionContextualizer = exceptionContextualizer;
         this.resolvableDependencies = instantiator.newInstance(ConfigurationResolvableDependencies.class, this);
+        this.resolvableDependencies.getDisplayName().convention(this.resolvableDependencies.getName());
 
         displayName = Describables.memoize(new ConfigurationDescription(identityPath));
 
@@ -2066,15 +2070,15 @@ since users cannot create non-legacy configurations and there is no current publ
         }
     }
 
-    private DefaultArtifactCollection artifactCollection(AttributeContainerInternal attributes, Spec<? super ComponentIdentifier> componentFilter, boolean lenient, boolean allowNoMatchingVariants, boolean selectFromAllVariants) {
-        DefaultResolutionHost failureHandler = new DefaultResolutionHost();
+    private DefaultArtifactCollection artifactCollection(AttributeContainerInternal attributes, Spec<? super ComponentIdentifier> componentFilter, boolean lenient, boolean allowNoMatchingVariants, boolean selectFromAllVariants, ResolutionHost resolutionHost) {
         ResolutionBackedFileCollection files = new ResolutionBackedFileCollection(
-            new SelectedArtifactsProvider(Specs.satisfyAll(), attributes, componentFilter, allowNoMatchingVariants, selectFromAllVariants, new VisitedArtifactsSetProvider()), lenient, failureHandler, taskDependencyFactory
+            new SelectedArtifactsProvider(Specs.satisfyAll(), attributes, componentFilter, allowNoMatchingVariants, selectFromAllVariants, new VisitedArtifactsSetProvider()), lenient, resolutionHost, taskDependencyFactory
         );
-        return new DefaultArtifactCollection(files, lenient, failureHandler, calculatedValueContainerFactory);
+        return new DefaultArtifactCollection(files, lenient, resolutionHost, calculatedValueContainerFactory);
     }
 
     public class ConfigurationResolvableDependencies implements ResolvableDependenciesInternal {
+        private final Property<String> displayName = new DefaultProperty<>(PropertyHost.NO_OP, String.class);
 
         @Override
         public String getName() {
@@ -2096,6 +2100,11 @@ since users cannot create non-legacy configurations and there is no current publ
         public FileCollection getFiles() {
             assertIsResolvable();
             return intrinsicFiles;
+        }
+
+        @Override
+        public Property<String> getDisplayName() {
+            return displayName;
         }
 
         @Override
@@ -2138,7 +2147,7 @@ since users cannot create non-legacy configurations and there is no current publ
 
         @Override
         public ArtifactCollection getArtifacts() {
-            return artifactCollection(configurationAttributes, Specs.satisfyAll(), false, false, false);
+            return artifactCollection(configurationAttributes, Specs.satisfyAll(), false, false, false, new DefaultResolutionHost());
         }
 
         @Override
@@ -2155,12 +2164,25 @@ since users cannot create non-legacy configurations and there is no current publ
 
             // This is a little coincidental: if view attributes have not been accessed, don't allow no matching variants
             boolean allowNoMatchingVariants = config.attributesUsed;
-
-            return new ConfigurationArtifactView(viewAttributes, config.lockComponentFilter(), config.lenient, allowNoMatchingVariants, config.reselectVariant);
+            ArtifactView view;
+            view = new ConfigurationArtifactView(viewAttributes, config.lockComponentFilter(), config.lenient, allowNoMatchingVariants, config.reselectVariant);
+            view.getDisplayName().set(config.displayName.map(name -> {
+                StringBuilder result = new StringBuilder();
+                if (name.equals(ViewConfiguration.DEFAULT_DISPLAY_NAME)) {
+                    result.append(name);
+                } else {
+                    result.append("artifact view: '").append(name).append("'");
+                }
+                result.append(" for ").append(DefaultConfiguration.this.getDisplayName());
+                return result.toString();
+            }));
+            return view;
         }
 
         private DefaultConfiguration.ArtifactViewConfiguration createArtifactViewConfiguration() {
-            return instantiator.newInstance(ArtifactViewConfiguration.class, attributesFactory, configurationAttributes);
+            DefaultConfiguration.ArtifactViewConfiguration config = instantiator.newInstance(ArtifactViewConfiguration.class, attributesFactory, configurationAttributes);
+            config.displayName.convention(ArtifactViewConfiguration.DEFAULT_DISPLAY_NAME);
+            return config;
         }
 
         @Override
@@ -2179,6 +2201,7 @@ since users cannot create non-legacy configurations and there is no current publ
             private final boolean lenient;
             private final boolean allowNoMatchingVariants;
             private final boolean selectFromAllVariants;
+            private final Property<String> displayName = new DefaultProperty<>(PropertyHost.NO_OP, String.class);
 
             ConfigurationArtifactView(AttributeContainerInternal viewAttributes, Spec<? super ComponentIdentifier> componentFilter, boolean lenient, boolean allowNoMatchingVariants, boolean selectFromAllVariants) {
                 this.viewAttributes = viewAttributes;
@@ -2186,6 +2209,12 @@ since users cannot create non-legacy configurations and there is no current publ
                 this.lenient = lenient;
                 this.allowNoMatchingVariants = allowNoMatchingVariants;
                 this.selectFromAllVariants = selectFromAllVariants;
+                this.displayName.convention("artifact view");
+            }
+
+            @Override
+            public Property<String> getDisplayName() {
+                return displayName;
             }
 
             @Override
@@ -2195,7 +2224,7 @@ since users cannot create non-legacy configurations and there is no current publ
 
             @Override
             public ArtifactCollection getArtifacts() {
-                return artifactCollection(viewAttributes, componentFilter, lenient, allowNoMatchingVariants, selectFromAllVariants);
+                return artifactCollection(viewAttributes, componentFilter, lenient, allowNoMatchingVariants, selectFromAllVariants, new ArtifactViewResolutionHost());
             }
 
             @Override
@@ -2204,9 +2233,34 @@ since users cannot create non-legacy configurations and there is no current publ
                 return new ResolutionBackedFileCollection(
                     new SelectedArtifactsProvider(Specs.satisfyAll(), viewAttributes, componentFilter, allowNoMatchingVariants, selectFromAllVariants, new VisitedArtifactsSetProvider()),
                     lenient,
-                    new DefaultResolutionHost(),
+                    new ArtifactViewResolutionHost(),
                     taskDependencyFactory
                 );
+            }
+
+            /**
+             * This {@link ResolutionHost} will report either the name of the configuration or the name of the artifact view,
+             * depending on the current failure type.
+             *
+             * This is done because artifact view dependency resolution failures would be failures if the configuration
+             * that the artifact view is created from was resolved directly - so we'll want to report the configuration's
+             * name in those cases.  However, a failure of files or artifacts implies the configuration itself is resolvable,
+             * so we'll (more precisely) report the artifact view as the source of those failures.
+             */
+            private final class ArtifactViewResolutionHost extends ContextualizingResolutionHost {
+                @Override
+                public String getDisplayName() {
+                    if ("dependencies".equals(lastFailureType)) {
+                        return DefaultConfiguration.this.getDisplayName();
+                    } else {
+                        return ConfigurationArtifactView.this.getDisplayName().get();
+                    }
+                }
+
+                @Override
+                public DisplayName displayName(String type) {
+                    return Describables.of(getDisplayName(), type);
+                }
             }
         }
 
@@ -2329,6 +2383,7 @@ since users cannot create non-legacy configurations and there is no current publ
         private boolean lenient;
         private boolean reselectVariant;
         private boolean attributesUsed;
+        private Property<String> displayName = new DefaultProperty<>(PropertyHost.NO_OP, String.class);
 
         public ArtifactViewConfiguration(ImmutableAttributesFactory attributesFactory, AttributeContainerInternal configurationAttributes) {
             this.attributesFactory = attributesFactory;
@@ -2383,6 +2438,11 @@ since users cannot create non-legacy configurations and there is no current publ
             return this;
         }
 
+        @Override
+        public Property<String> getDisplayName() {
+            return displayName;
+        }
+
         private void assertComponentFilterUnset() {
             if (componentFilter != null) {
                 throw new IllegalStateException("The component filter can only be set once before the view was computed");
@@ -2404,7 +2464,39 @@ since users cannot create non-legacy configurations and there is no current publ
         }
     }
 
-    private class DefaultResolutionHost implements ResolutionHost {
+    /**
+     * A {@link ResolutionHost} that uses the {@link ResolveExceptionContextualizer} in the containing
+     * {@link DefaultConfiguration} to contextualize resolution failures of this configuration or
+     * any {@link ArtifactView}s it creates.
+     *
+     * Also consolidates multiple failures into a single {@link DefaultLenientConfiguration.ArtifactResolveException} if necessary.
+     */
+    private abstract class ContextualizingResolutionHost implements ResolutionHost {
+        protected String lastFailureType;
+
+        @Override
+        public Optional<? extends RuntimeException> mapFailure(String type, Collection<Throwable> failures) {
+            lastFailureType = type;
+
+            if (failures.isEmpty()) {
+                return Optional.empty();
+            }
+            if (failures.size() == 1) {
+                ResolveException resolveException = exceptionContextualizer.maybeContextualize(failures, DefaultConfiguration.this);
+                if (resolveException != null) {
+                    return Optional.of(resolveException);
+                }
+                Throwable failure = failures.iterator().next();
+                if (failure instanceof ResolveException) {
+                    resolveException = (ResolveException) failure;
+                    return Optional.of(exceptionContextualizer.contextualize(resolveException, getDisplayName()));
+                }
+            }
+            return Optional.of(new DefaultLenientConfiguration.ArtifactResolveException(type, getIdentityPath().toString(), getDisplayName(), failures));
+        }
+    }
+
+    private class DefaultResolutionHost extends ContextualizingResolutionHost {
         @Override
         public String getDisplayName() {
             return DefaultConfiguration.this.getDisplayName();
@@ -2413,11 +2505,6 @@ since users cannot create non-legacy configurations and there is no current publ
         @Override
         public DisplayName displayName(String type) {
             return Describables.of(DefaultConfiguration.this, type);
-        }
-
-        @Override
-        public Optional<? extends RuntimeException> mapFailure(String type, Collection<Throwable> failures) {
-            return DefaultConfiguration.this.mapFailure(type, failures);
         }
     }
 
