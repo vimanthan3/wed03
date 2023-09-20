@@ -25,8 +25,8 @@ import org.jetbrains.kotlin.assignment.plugin.AssignmentComponentContainerContri
 import org.jetbrains.kotlin.assignment.plugin.CliAssignPluginResolutionAltererExtension
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.CompilerSystemProperties.KOTLIN_COMPILER_ENVIRONMENT_KEEPALIVE_PROPERTY
-import org.jetbrains.kotlin.cli.common.config.addKotlinSourceRoot
 import org.jetbrains.kotlin.cli.common.config.addKotlinSourceRoots
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
@@ -50,7 +50,6 @@ import org.jetbrains.kotlin.config.JVMConfigurationKeys.IR
 import org.jetbrains.kotlin.config.JVMConfigurationKeys.JDK_HOME
 import org.jetbrains.kotlin.config.JVMConfigurationKeys.JVM_TARGET
 import org.jetbrains.kotlin.config.JVMConfigurationKeys.OUTPUT_DIRECTORY
-import org.jetbrains.kotlin.config.JVMConfigurationKeys.RETAIN_OUTPUT_IN_MEMORY
 import org.jetbrains.kotlin.config.JVMConfigurationKeys.SAM_CONVERSIONS
 import org.jetbrains.kotlin.config.JvmAnalysisFlags
 import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
@@ -67,7 +66,8 @@ import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.resolve.extensions.AssignResolutionAltererExtension
 import org.jetbrains.kotlin.samWithReceiver.CliSamWithReceiverComponentContributor
 import org.jetbrains.kotlin.scripting.compiler.plugin.ScriptingCompilerConfigurationComponentRegistrar
-import org.jetbrains.kotlin.scripting.configuration.ScriptingConfigurationKeys.SCRIPT_DEFINITIONS
+import org.jetbrains.kotlin.scripting.compiler.plugin.impl.ScriptJvmCompilerFromEnvironment
+import org.jetbrains.kotlin.scripting.compiler.plugin.toCompilerMessageSeverity
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.utils.PathUtil
 import org.slf4j.Logger
@@ -76,16 +76,26 @@ import java.io.File
 import java.io.OutputStream
 import java.io.PrintStream
 import kotlin.reflect.KClass
+import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ScriptDiagnostic
+import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.baseClass
 import kotlin.script.experimental.api.defaultImports
 import kotlin.script.experimental.api.hostConfiguration
 import kotlin.script.experimental.api.implicitReceivers
+import kotlin.script.experimental.api.isError
+import kotlin.script.experimental.api.with
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.host.configurationDependencies
 import kotlin.script.experimental.host.getScriptingClass
+import kotlin.script.experimental.host.toScriptSource
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.JvmGetScriptingClass
+import kotlin.script.experimental.jvm.updateClasspath
+import kotlin.script.experimental.jvmhost.BasicJvmScriptClassFilesGenerator
+import kotlin.script.experimental.jvmhost.BasicJvmScriptingHost
+import kotlin.script.experimental.jvmhost.JvmScriptCompiler
 
 
 fun compileKotlinScriptModuleTo(
@@ -171,13 +181,8 @@ fun compileKotlinScriptModuleTo(
     withRootDisposable {
         withCompilationExceptionHandler(messageCollector) {
             val configuration = compilerConfigurationFor(messageCollector, jvmTarget).apply {
-                put(RETAIN_OUTPUT_IN_MEMORY, false)
-                put(OUTPUT_DIRECTORY, outputDirectory)
                 setModuleName(moduleName)
                 addScriptingCompilerComponents()
-                addScriptDefinition(scriptDef)
-                scriptFiles.forEach { addKotlinSourceRoot(it) }
-                classPath.forEach { addJvmClasspathRoot(it) }
             }
 
             val environment = kotlinCoreEnvironmentFor(configuration).apply {
@@ -185,12 +190,49 @@ fun compileKotlinScriptModuleTo(
                 KotlinAssignmentCompilerPlugin.apply(project)
             }
 
-            compileBunchOfSources(environment)
-                || throw ScriptCompilationException(messageCollector.errors)
+            val host = BasicJvmScriptingHost(
+                compiler = JvmScriptCompiler(scriptDef.hostConfiguration, ScriptJvmCompilerFromEnvironment(environment)),
+                evaluator = BasicJvmScriptClassFilesGenerator(outputDirectory)
+            )
+            val compilationConfiguration = scriptDef.compilationConfiguration.with {
+                updateClasspath(classPath.toList())
+            }
+            scriptFiles.forEach {
+                val script = File(it).toScriptSource()
+                host.eval(script, compilationConfiguration, scriptDef.evaluationConfiguration)
+                    .reportToMessageCollectorAndThrowOnErrors(script, messageCollector)
+            }
         }
     }
 }
 
+private fun ResultWithDiagnostics<*>.reportToMessageCollectorAndThrowOnErrors(script: SourceCode, messageCollector: MessageCollector): ResultWithDiagnostics<*> = also {
+    val lines = if (it.reports.isEmpty()) null else script.text.lines()
+    val scriptErrors = ArrayList<ScriptCompilationError>()
+    for (report in it.reports) {
+        val location = report.location
+        val sourcePath = report.sourcePath
+        val compilerMessageLocation = if (location != null && sourcePath != null) {
+            CompilerMessageLocation.create(
+                sourcePath,
+                location.start.line, location.start.col,
+                lines?.getOrNull(location.start.line - 1)
+            )
+        } else null
+
+        if (report.isError() || report.severity == ScriptDiagnostic.Severity.WARNING) {
+            scriptErrors.add(ScriptCompilationError(report.message, compilerMessageLocation))
+        }
+        messageCollector.report(
+            report.severity.toCompilerMessageSeverity(),
+            report.render(withSeverity = false, withLocation = location == null || sourcePath == null),
+            compilerMessageLocation
+        )
+    }
+    if (it is ResultWithDiagnostics.Failure || (messageCollector.hasErrors() && scriptErrors.isNotEmpty())) {
+        throw ScriptCompilationException(scriptErrors)
+    }
+}
 
 private
 object KotlinAssignmentCompilerPlugin {
@@ -408,12 +450,6 @@ fun CompilerConfiguration.addScriptingCompilerComponents() {
         org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar.PLUGIN_COMPONENT_REGISTRARS,
         ScriptingCompilerConfigurationComponentRegistrar()
     )
-}
-
-
-private
-fun CompilerConfiguration.addScriptDefinition(scriptDef: ScriptDefinition) {
-    add(SCRIPT_DEFINITIONS, scriptDef)
 }
 
 
