@@ -65,7 +65,10 @@ import org.jetbrains.kotlin.extensions.internal.InternalNonStableExtensionPoints
 import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.resolve.extensions.AssignResolutionAltererExtension
 import org.jetbrains.kotlin.samWithReceiver.CliSamWithReceiverComponentContributor
+import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverComponentRegistrar
+import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverConfigurationKeys
 import org.jetbrains.kotlin.scripting.compiler.plugin.ScriptingCompilerConfigurationComponentRegistrar
+import org.jetbrains.kotlin.scripting.compiler.plugin.ScriptingK2CompilerPluginRegistrar
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.ScriptJvmCompilerFromEnvironment
 import org.jetbrains.kotlin.scripting.compiler.plugin.toCompilerMessageSeverity
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -183,6 +186,8 @@ fun compileKotlinScriptModuleTo(
             val configuration = compilerConfigurationFor(messageCollector, jvmTarget).apply {
                 setModuleName(moduleName)
                 addScriptingCompilerComponents()
+                put(CommonConfigurationKeys.USE_FIR, true)
+                add(SamWithReceiverConfigurationKeys.ANNOTATION, "org.gradle.api.HasImplicitReceiver")
             }
 
             val environment = kotlinCoreEnvironmentFor(configuration).apply {
@@ -449,6 +454,14 @@ fun CompilerConfiguration.addScriptingCompilerComponents() {
     add(
         org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar.PLUGIN_COMPONENT_REGISTRARS,
         ScriptingCompilerConfigurationComponentRegistrar()
+    )
+    add(
+        org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar.COMPILER_PLUGIN_REGISTRARS,
+        ScriptingK2CompilerPluginRegistrar()
+    )
+    add(
+        org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar.COMPILER_PLUGIN_REGISTRARS,
+        SamWithReceiverComponentRegistrar()
     )
 }
 
