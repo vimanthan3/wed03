@@ -17,6 +17,7 @@
 pluginManagement {
     includeBuild("../build-logic-commons")
     repositories {
+        mavenLocal()
         gradlePluginPortal()
     }
 }
@@ -27,6 +28,7 @@ plugins {
 
 dependencyResolutionManagement {
     repositories {
+        mavenLocal()
         maven {
             name = "Gradle Enterprise release candidates"
             url = uri("https://repo.gradle.org/gradle/enterprise-libs-release-candidates")

@@ -15,6 +15,7 @@
  */
 
 repositories {
+    mavenLocal()
     maven {
         name = "Gradle public repository"
         url = uri("https://repo.gradle.org/gradle/public")

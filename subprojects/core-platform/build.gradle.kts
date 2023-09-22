@@ -6,6 +6,11 @@ description = "Defines which JARs go into the core part (libs/*.jar) of a Gradle
 
 javaPlatform.allowDependencies()
 
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
 dependencies {
     runtime(project(":installation-beacon"))
     runtime(project(":api-metadata"))
