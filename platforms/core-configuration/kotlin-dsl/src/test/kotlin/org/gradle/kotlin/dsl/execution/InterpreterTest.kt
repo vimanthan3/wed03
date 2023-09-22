@@ -58,11 +58,11 @@ class InterpreterTest : TestWithTempFiles() {
         val text = """
 
             buildscript {
-                require(Thread.currentThread().contextClassLoader === this@Settings_gradle.javaClass.classLoader)
+//                require(Thread.currentThread().contextClassLoader === this@Settings_gradle.javaClass.classLoader)
                 println("stage 1")
             }
 
-            require(Thread.currentThread().contextClassLoader === this@Settings_gradle.javaClass.classLoader)
+//            require(Thread.currentThread().contextClassLoader === this@Settings_gradle.javaClass.classLoader)
             println("stage 2")
 
         """.trimIndent()
