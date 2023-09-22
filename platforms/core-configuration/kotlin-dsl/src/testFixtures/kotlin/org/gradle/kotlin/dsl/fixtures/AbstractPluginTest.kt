@@ -36,6 +36,7 @@ open class AbstractPluginTest : AbstractKotlinIntegrationTest() {
         """
             repositories {
                 $testRepositories
+                mavenLocal()
                 gradlePluginPortal()
             }
         """

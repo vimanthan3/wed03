@@ -38,12 +38,27 @@ abstract class AbstractKotlinIntegrationTest : AbstractIntegrationTest() {
 
     protected
     open val defaultSettingsScript
-        get() = ""
+        get() = """
+pluginManagement {
+    repositories {
+        mavenLocal()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositories {
+        mavenLocal()
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+        """.trimIndent()
 
     protected
     val repositoriesBlock
         get() = """
             repositories {
+                mavenLocal()
                 gradlePluginPortal()
             }
         """

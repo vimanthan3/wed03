@@ -4,6 +4,13 @@ plugins {
     id("gradlebuild.kotlin-dsl-sam-with-receiver")
 }
 
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+}
+
 description = "Kotlin DSL Provider"
 
 repositories {
@@ -124,6 +131,8 @@ dependencies {
     testFixturesImplementation(libs.asm)
 
     integTestDistributionRuntimeOnly(project(":distributions-basics"))
+    integTestRuntimeOnly(project(":kotlin-dsl-plugins"))
+    integTestLocalRepository(project(":kotlin-dsl-plugins"))
 }
 
 packageCycles {
