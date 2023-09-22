@@ -39,7 +39,7 @@ import java.util.Objects;
 
 import static org.gradle.util.internal.TextUtil.getPluralEnding;
 
-class ResolutionErrorRenderer {
+public class ResolutionErrorRenderer {
     private final Spec<DependencyResult> dependencySpec;
     private final List<Action<StyledTextOutput>> errorActions = new ArrayList<>(1);
     private final List<Provider<Throwable>> errorProviders = new ArrayList<>(1);

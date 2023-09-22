@@ -37,7 +37,7 @@ import javax.inject.Inject;
 
 import static org.gradle.plugin.use.resolve.internal.ArtifactRepositoriesPluginResolver.PLUGIN_MARKER_SUFFIX;
 
-abstract class MavenPluginPublishPlugin implements Plugin<Project> {
+public abstract class MavenPluginPublishPlugin implements Plugin<Project> {
 
     @Inject
     protected abstract ProviderFactory getProviderFactory();
