@@ -19,7 +19,7 @@ import spock.lang.Issue
 import java.io.StringWriter
 
 
-class KotlinBuildScriptIntegrationTest : org.gradle.kotlin.dsl.fixtures.AbstractPluginTest() {
+class KotlinBuildScriptIntegrationTest : AbstractKotlinIntegrationTest() {
 
     @Test
     fun `can apply plugin using ObjectConfigurationAction syntax`() {
