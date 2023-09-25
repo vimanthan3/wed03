@@ -40,7 +40,7 @@ import javax.inject.Inject;
 
 import static org.gradle.plugin.use.resolve.internal.ArtifactRepositoriesPluginResolver.PLUGIN_MARKER_SUFFIX;
 
-public abstract class IvyPluginPublishingPlugin implements Plugin<Project> {
+abstract class IvyPluginPublishingPlugin implements Plugin<Project> {
 
     @Inject
     protected abstract ProviderFactory getProviderFactory();

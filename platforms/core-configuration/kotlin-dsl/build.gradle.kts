@@ -132,8 +132,6 @@ dependencies {
     testFixturesImplementation(libs.asm)
 
     integTestDistributionRuntimeOnly(project(":distributions-basics"))
-    integTestRuntimeOnly(project(":kotlin-dsl-plugins"))
-    integTestLocalRepository(project(":kotlin-dsl-plugins"))
 }
 
 packageCycles {

@@ -28,10 +28,7 @@ class ImplicitImports internal constructor(
 ) {
 
     val list by lazy {
-        (gradleImports() + gradleKotlinDslImports()).filterNot {
-            it.startsWith("org.gradle.testkit") ||
-            it.startsWith("org.gradle.kotlin.dsl.plugins")
-        }
+        (gradleImports() + gradleKotlinDslImports())
     }
 
     private
