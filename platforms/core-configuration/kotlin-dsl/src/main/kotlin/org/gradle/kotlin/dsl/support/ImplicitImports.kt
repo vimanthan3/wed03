@@ -28,7 +28,7 @@ class ImplicitImports internal constructor(
 ) {
 
     val list by lazy {
-        (gradleImports() + gradleKotlinDslImports())
+        (gradleImports() + gradleKotlinDslImports()).filterNot(::unavailableImport)
     }
 
     private
@@ -49,4 +49,10 @@ class ImplicitImports internal constructor(
             "java.io.File",
             "javax.inject.Inject"
         )
+
+    // TODO this is a workaround for K2 being strict about the availability of imports
+    private
+    fun unavailableImport(import: String) =
+        import.startsWith("org.gradle.testkit") ||
+            import.startsWith("org.gradle.kotlin.dsl.plugins")
 }
