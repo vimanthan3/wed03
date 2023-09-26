@@ -181,6 +181,10 @@ class KotlinBuildScriptIntegrationTest : AbstractKotlinIntegrationTest() {
             """
         )
 
+        executer.beforeExecute {
+            noDeprecationChecks()
+        }
+
         buildAndFail("help").apply {
             assertThat(error, containsString("The plugins {} block must not be used here"))
         }
