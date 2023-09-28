@@ -88,19 +88,22 @@ fun BuildType.cleanUpGitUntrackedFilesAndDirectories() {
         script {
             name = "CLEAN_UP_GIT_UNTRACKED_FILES_AND_DIRECTORIES"
             executionMode = BuildStep.ExecutionMode.RUN_ONLY_ON_FAILURE
-            scriptContent = "git clean -fdx -e \"test-splits/\""
+            scriptContent = "git clean -fdx -e test-splits/ -e .gradle/workspace-id.txt -e \"*.psoutput\""
             skipConditionally()
             onlyRunOnPreTestedCommitBuildBranch()
         }
     }
 }
 
-fun BuildSteps.cleanUpPerformanceBuildDir(os: Os) {
+fun BuildSteps.cleanUpReadOnlyDir(os: Os) {
     if (os == Os.WINDOWS) {
         script {
-            name = "CLEAN_UP_PERFORMANCE_BUILD_DIR"
+            name = "CLEAN_UP_READ_ONLY_DIR"
             executionMode = BuildStep.ExecutionMode.ALWAYS
-            scriptContent = """rmdir /s /q %teamcity.build.checkoutDir%\subprojects\performance\build && (echo Directory removed) || (echo Directory not found) """
+            scriptContent = """
+                rmdir /s /q %teamcity.build.checkoutDir%\subprojects\performance\build && (echo performance-build-dir removed) || (echo performance-build-dir not found)
+                rmdir /s /q %teamcity.build.checkoutDir%\subprojects\version-control\build && (echo version-control-build-dir removed) || (echo version-control-build-dir not found)
+                """
             skipConditionally()
         }
     }

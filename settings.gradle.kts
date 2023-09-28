@@ -62,7 +62,6 @@ unassigned {
 
 // Gradle implementation projects
 unassigned {
-    subproject("configuration-cache")
     subproject("api-metadata")
     subproject("base-services-groovy")
     subproject("jvm-services")
@@ -74,12 +73,8 @@ unassigned {
     subproject("resources-s3")
     subproject("resources-sftp")
     subproject("plugins")
-    subproject("ide")
-    subproject("ide-native")
     subproject("maven")
-    subproject("tooling-api")
     subproject("build-events")
-    subproject("tooling-api-builders")
     subproject("signing")
     subproject("reporting")
     subproject("diagnostics")
@@ -105,7 +100,6 @@ unassigned {
     subproject("security")
     subproject("normalization-java")
     subproject("build-operations")
-    subproject("problems")
     subproject("instrumentation-agent")
     subproject("instrumentation-declarations")
 }
@@ -133,6 +127,7 @@ platform("core-runtime") {
 
 // Core Configuration Platform
 platform("core-configuration") {
+    subproject("configuration-cache")
     subproject("kotlin-dsl")
     subproject("kotlin-dsl-provider-plugins")
     subproject("kotlin-dsl-tooling-builders")
@@ -159,7 +154,12 @@ platform("core-execution") {
 // IDE Platform
 platform("ide") {
     subproject("base-ide-plugins")
+    subproject("ide")
+    subproject("ide-native")
     subproject("ide-plugins")
+    subproject("problems")
+    subproject("tooling-api")
+    subproject("tooling-api-builders")
 }
 
 // Software Platform
