@@ -242,6 +242,11 @@ class MultipleCandidateMatcher<T extends HasAttributes> {
         if (requestedAttributes.isEmpty()) {
             return;
         }
+
+        BitSet initiallyRemaining = new BitSet();
+        initiallyRemaining.or(remaining);
+        int initiallyRemainingCount = initiallyRemaining.cardinality();
+
         for (Attribute<?> extraAttribute : extraAttributes) {
             // We consider only extra attributes which are NOT on every candidate:
             // Because they are EXTRA attributes, we consider that a
@@ -249,12 +254,14 @@ class MultipleCandidateMatcher<T extends HasAttributes> {
             int candidateCount = candidateAttributeSets.length;
             BitSet any = new BitSet(candidateCount);
             for (int c = 0; c < candidateCount; c++) {
-                ImmutableAttributes candidateAttributeSet = candidateAttributeSets[c];
-                if (candidateAttributeSet.findEntry(extraAttribute.getName()).isPresent()) {
-                    any.set(c);
+                if (initiallyRemaining.get(c)) {
+                    ImmutableAttributes candidateAttributeSet = candidateAttributeSets[c];
+                    if (candidateAttributeSet.findEntry(extraAttribute.getName()).isPresent()) {
+                        any.set(c);
+                    }
                 }
             }
-            if (any.cardinality() > 0 && any.cardinality() != candidateCount) {
+            if (any.cardinality() > 0 && any.cardinality() != initiallyRemainingCount) {
                 // there is at least one candidate which does NOT provide this attribute
                 remaining.andNot(any);
                 if (remaining.cardinality() == 0) {
