@@ -47,6 +47,10 @@ public class DefaultProperty<T> extends AbstractProperty<T, ProviderInternal<? e
     }
 
     public String getProvenance() {
+        ProviderInternal<? extends T> provider = getProvider();
+        if (provider instanceof DefaultProperty) {
+            return ((DefaultProperty<? extends T>) provider).getProvenance();
+        }
         return provenance;
     }
 
@@ -82,7 +86,6 @@ public class DefaultProperty<T> extends AbstractProperty<T, ProviderInternal<? e
         } else {
             set(Cast.<T>uncheckedNonnullCast(object));
         }
-        provenance = nextProvenance.get();
     }
 
     @Override
@@ -92,6 +95,7 @@ public class DefaultProperty<T> extends AbstractProperty<T, ProviderInternal<? e
         } else {
             setSupplier(Providers.fixedValue(getValidationDisplayName(), value, type, sanitizer));
         }
+        provenance = nextProvenance.get();
     }
 
     @Override
