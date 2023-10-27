@@ -16,7 +16,6 @@
 
 package org.gradle.testing.base;
 
-import org.gradle.api.ExtensiblePolymorphicDomainObjectContainer;
 import org.gradle.api.Incubating;
 import org.gradle.api.Named;
 
@@ -28,7 +27,15 @@ import org.gradle.api.Named;
 @Incubating
 public interface TestSuite extends Named {
     /**
+     * Configuration for the {@link #getTargets() targets matrix} dimensions.
+     *
+     * @return configuration for the targets matrix dimensions
+     * @since 8.5
+     */
+    IdentityDimensions getTargetDimensions();
+
+    /**
      * Available targets for this test suite.
      */
-    ExtensiblePolymorphicDomainObjectContainer<? extends TestSuiteTarget> getTargets();
+    IdentityContainer<? extends TestSuiteTarget> getTargets();
 }

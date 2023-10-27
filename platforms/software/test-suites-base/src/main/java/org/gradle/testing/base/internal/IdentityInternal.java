@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 the original author or authors.
+ * Copyright 2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 
-package org.gradle.testing.base;
+package org.gradle.testing.base.internal;
 
-import org.gradle.api.Incubating;
+import org.gradle.testing.base.Identity;
 
-/**
- * Base test suite target.
- *
- * A test suite target is a collection of tests that run in a particular context (operating system, Java runtime, etc).
- *
- * @since 7.3
- */
-@Incubating
-public interface TestSuiteTarget extends IdentityContainer.Value {
+public interface IdentityInternal extends Identity {
+    /**
+     * Converts the coordinates to a task name part. This essentially appends the key-value pairs to form something
+     * that can be used as a task name.
+     */
+    String toTaskNamePart();
 }

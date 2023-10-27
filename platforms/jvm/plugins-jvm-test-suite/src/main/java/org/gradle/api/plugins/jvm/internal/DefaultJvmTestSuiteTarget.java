@@ -18,36 +18,33 @@ package org.gradle.api.plugins.jvm.internal;
 
 import org.gradle.api.Buildable;
 import org.gradle.api.plugins.JavaBasePlugin;
+import org.gradle.api.plugins.JvmTestSuitePlugin;
 import org.gradle.api.plugins.jvm.JvmTestSuiteTarget;
 import org.gradle.api.internal.tasks.TaskDependencyFactory;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskDependency;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.testing.Test;
+import org.gradle.testing.base.internal.IdentityInternal;
 import org.gradle.util.internal.GUtil;
 
 import javax.inject.Inject;
 
 public abstract class DefaultJvmTestSuiteTarget implements JvmTestSuiteTarget, Buildable {
-    private final String name;
     private final TaskProvider<Test> testTask;
     private final TaskDependencyFactory taskDependencyFactory;
 
     @Inject
-    public DefaultJvmTestSuiteTarget(String name, TaskContainer tasks, TaskDependencyFactory taskDependencyFactory) {
-        this.name = name;
-
+    public DefaultJvmTestSuiteTarget(String suiteName, IdentityInternal coords, TaskContainer tasks, TaskDependencyFactory taskDependencyFactory) {
+        String name = coords.get(DefaultJvmTestSuite.IS_DEFAULT_TEST_TARGET, boolean.class)
+            ? JvmTestSuitePlugin.DEFAULT_TEST_SUITE_NAME
+            : suiteName + "_" + coords.toTaskNamePart();
         // Might not always want Test type here?
         this.testTask = tasks.register(name, Test.class, t -> {
-            t.setDescription("Runs the " + GUtil.toWords(name) + " suite.");
+            t.setDescription("Runs the " + GUtil.toWords(suiteName) + " suite's " + coords.toTaskNamePart() + " target.");
             t.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
         });
         this.taskDependencyFactory = taskDependencyFactory;
-    }
-
-    @Override
-    public String getName() {
-        return name;
     }
 
     public TaskProvider<Test> getTestTask() {

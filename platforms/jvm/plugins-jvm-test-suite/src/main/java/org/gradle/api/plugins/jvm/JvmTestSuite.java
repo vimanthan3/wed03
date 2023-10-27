@@ -18,12 +18,12 @@ package org.gradle.api.plugins.jvm;
 
 import org.gradle.api.Action;
 import org.gradle.api.Buildable;
-import org.gradle.api.ExtensiblePolymorphicDomainObjectContainer;
 import org.gradle.api.Incubating;
 import org.gradle.api.attributes.TestSuiteType;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSet;
+import org.gradle.testing.base.IdentityContainer;
 import org.gradle.testing.base.TestSuite;
 
 /**
@@ -44,6 +44,8 @@ import org.gradle.testing.base.TestSuite;
  */
 @Incubating
 public interface JvmTestSuite extends TestSuite, Buildable {
+    @Override
+    IdentityContainer<? extends JvmTestSuiteTarget> getTargets();
 
     // TODO: Rename to getSourceSet next time changes are made in this area.
     /**
@@ -61,15 +63,6 @@ public interface JvmTestSuite extends TestSuite, Buildable {
      * @param configuration configuration applied against the SourceSet for this test suite
      */
     void sources(Action<? super SourceSet> configuration);
-
-    /**
-     * Collection of test suite targets.
-     *
-     * Each test suite target executes the tests in this test suite with a particular context and task.
-     *
-     * @return collection of test suite targets.
-     */
-    ExtensiblePolymorphicDomainObjectContainer<? extends JvmTestSuiteTarget> getTargets();
 
     /**
      * Get the test type for this test suite.
