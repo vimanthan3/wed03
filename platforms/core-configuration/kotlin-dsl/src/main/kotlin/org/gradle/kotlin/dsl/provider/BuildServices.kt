@@ -28,9 +28,9 @@ import org.gradle.internal.classloader.ClasspathHasher
 import org.gradle.internal.classpath.CachedClasspathTransformer
 import org.gradle.internal.event.ListenerManager
 import org.gradle.internal.execution.ExecutionEngine
+import org.gradle.internal.execution.FileCollectionSnapshotter
 import org.gradle.internal.execution.InputFingerprinter
 import org.gradle.internal.fingerprint.classpath.ClasspathFingerprinter
-import org.gradle.internal.hash.ChecksumService
 import org.gradle.internal.logging.progress.ProgressLoggerFactory
 import org.gradle.internal.operations.BuildOperationExecutor
 import org.gradle.internal.scripts.ScriptExecutionListener
@@ -126,8 +126,8 @@ object BuildServices {
 
     @Suppress("unused")
     fun createCompileClasspathHasher(
-        checksumService: ChecksumService,
         kotlinDslCompileAvoidanceClasspathHashCache: KotlinDslCompileAvoidanceClasspathHashCache,
+        fileCollectionSnapshotter: FileCollectionSnapshotter,
 //        cacheService: ResourceSnapshotterCacheService,
 //        fileCollectionSnapshotter: FileCollectionSnapshotter,
 //        stringInterner: StringInterner,
@@ -138,7 +138,7 @@ object BuildServices {
             if (isKotlinScriptCompilationAvoidanceEnabled) {
 //                KotlinCompileClasspathFingerprinter(cacheService, fileCollectionSnapshotter, stringInterner)
                 // TODO: drop unused code
-                NewKotlinCompileClasspathFingerprinter(checksumService, kotlinDslCompileAvoidanceClasspathHashCache)
+                NewKotlinCompileClasspathFingerprinter(kotlinDslCompileAvoidanceClasspathHashCache, fileCollectionSnapshotter)
             } else {
                 classpathFingerprinter
             },
