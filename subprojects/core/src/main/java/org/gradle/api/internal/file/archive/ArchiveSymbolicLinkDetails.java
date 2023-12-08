@@ -23,9 +23,9 @@ class ArchiveSymbolicLinkDetails<ENTRY> implements SymbolicLinkDetails {
     private String target;
     private Boolean targetExists = null;
     private ENTRY targetEntry = null;
-    private final ArchiveVisitor<ENTRY> visitor;
+    private final ArchiveMetadata<ENTRY> visitor;
 
-    ArchiveSymbolicLinkDetails(ENTRY entry, ArchiveVisitor<ENTRY> visitor) {
+    ArchiveSymbolicLinkDetails(ENTRY entry, ArchiveMetadata<ENTRY> visitor) {
         this.entry = entry;
         this.visitor = visitor;
     }

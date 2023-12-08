@@ -16,43 +16,23 @@
 
 package org.gradle.api.internal.file.archive;
 
-import org.gradle.api.file.FileVisitor;
-import org.gradle.internal.file.Chmod;
-
 import javax.annotation.Nullable;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.gradle.internal.file.PathTraversalChecker.safePathName;
-
-public abstract class ArchiveVisitor<ENTRY> {
+public abstract class ArchiveMetadata<ENTRY> {
     private final File originalFile;
     protected final File expandedDir;
-    private final FileVisitor visitor;
-    protected final AtomicBoolean stopFlag;
-    protected final Chmod chmod;
     protected TreeMap<String, ENTRY> entries = null;
-    protected final boolean preserveLinks;
 
-    ArchiveVisitor(
+    ArchiveMetadata(
         File originalFile,
-        File expandedDir,
-        FileVisitor visitor,
-        AtomicBoolean stopFlag,
-        Chmod chmod
+        File expandedDir
     ) {
         this.originalFile = originalFile;
         this.expandedDir = expandedDir;
-        this.visitor = visitor;
-        this.stopFlag = stopFlag;
-        this.preserveLinks = visitor.linksStrategy().preserveLinks();
-        this.chmod = chmod;
     }
 
     abstract TreeMap<String, ENTRY> getEntries();
@@ -72,19 +52,6 @@ public abstract class ArchiveVisitor<ENTRY> {
     abstract long getSize(ENTRY entry);
 
     abstract @Nullable ENTRY getEntry(String path);
-
-    abstract AbstractArchiveFileTreeElement<ENTRY, ? extends ArchiveVisitor<ENTRY>> createDetails(
-        ENTRY entry,
-        String targetPath
-    );
-
-    public void visitAll() throws IOException {
-        Iterator<ENTRY> it = getEntries().values().iterator();
-        while (it.hasNext() && !stopFlag.get()) {
-            ENTRY entry = it.next();
-            visitEntry(entry, safePathName(getPath(entry)), false);
-        }
-    }
 
     @Nullable
     ENTRY getTargetEntry(ENTRY entry) {
@@ -129,38 +96,6 @@ public abstract class ArchiveVisitor<ENTRY> {
             }
         }
         return true;
-    }
-
-    protected void visitEntry(ENTRY entry, String targetPath, boolean extract) {
-        AbstractArchiveFileTreeElement<ENTRY, ? extends ArchiveVisitor<ENTRY>> details = createDetails(entry, targetPath);
-        if (details.isDirectory()) {
-            visitor.visitDir(details);
-            if (!preserveLinks && details.isLink()) {
-                ENTRY targetEntry = details.getSymbolicLinkDetails().getTargetEntry();
-                String originalPath = getPath(targetEntry);
-                visitRecursively(originalPath, targetPath + '/');
-            }
-        } else {
-            if (extract) {
-                details.getFile();
-            }
-            visitor.visitFile(details);
-        }
-    }
-
-    private void visitRecursively(String originalPath, String targetPath) {
-        String currentKey = originalPath;
-        while (!stopFlag.get()) {
-            Map.Entry<String, ENTRY> subEntry = getEntries().higherEntry(currentKey);
-            if (subEntry != null && subEntry.getKey().startsWith(originalPath)) {
-                currentKey = subEntry.getKey();
-            } else {
-                break;
-            }
-
-            String newPath = targetPath + currentKey.substring(originalPath.length());
-            visitEntry(subEntry.getValue(), newPath, false);
-        }
     }
 
     public File getOriginalFile() {

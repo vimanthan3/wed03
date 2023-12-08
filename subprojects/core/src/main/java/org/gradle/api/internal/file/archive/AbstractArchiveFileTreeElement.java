@@ -21,9 +21,11 @@ import org.gradle.api.file.FileVisitDetails;
 import org.gradle.api.file.RelativePath;
 import org.gradle.api.internal.file.CopyableFileTreeElement;
 import org.gradle.api.internal.file.DefaultFilePermissions;
+import org.gradle.internal.file.Chmod;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.gradle.internal.file.PathTraversalChecker.safePathName;
 
@@ -33,25 +35,39 @@ import static org.gradle.internal.file.PathTraversalChecker.safePathName;
  * <p>
  * This implementation can extract the files from the archive to the supplied expansion directory.
  */
-public abstract class AbstractArchiveFileTreeElement<ENTRY, METADATA extends ArchiveVisitor<ENTRY>> extends CopyableFileTreeElement implements FileVisitDetails {
+public abstract class AbstractArchiveFileTreeElement<ENTRY, METADATA extends ArchiveMetadata<ENTRY>> extends CopyableFileTreeElement implements FileVisitDetails {
 
-    protected final METADATA archiveMetadata;
     protected final ENTRY entry;
-    protected ENTRY resultEntry = null;
-    private final String targetPath;
+    private String targetPath;
+    private final boolean preserveLink;
+    protected final METADATA archiveMetadata;
+    protected ENTRY resultEntry;
+    private final AtomicBoolean stopFlag;
     protected ArchiveSymbolicLinkDetails<ENTRY> linkDetails;
     private File file;
     private Boolean isLink = null;
 
     protected AbstractArchiveFileTreeElement(
-        METADATA archiveMetadata,
         ENTRY entry,
-        String targetPath
+        @Nullable String targetPath,
+        boolean preserveLink,
+        METADATA archiveMetadata,
+        AtomicBoolean stopFlag,
+        Chmod chmod
     ) {
-        super(archiveMetadata.chmod);
+        super(chmod);
         this.entry = entry;
+        this.preserveLink = preserveLink;
         this.archiveMetadata = archiveMetadata;
         this.targetPath = targetPath;
+        this.stopFlag = stopFlag;
+    }
+
+    protected String getTargetPath() {
+        if (targetPath == null) {
+            targetPath = archiveMetadata.getPath(entry);
+        }
+        return targetPath;
     }
 
     protected ENTRY getResultEntry() {
@@ -68,7 +84,7 @@ public abstract class AbstractArchiveFileTreeElement<ENTRY, METADATA extends Arc
     @Override
     public File getFile() {
         if (file == null) {
-            file = new File(archiveMetadata.expandedDir, archiveMetadata.getPath(entry));
+            file = new File(archiveMetadata.expandedDir, safePathName(getTargetPath()));
             if (!file.exists()) {
                 copyPreservingPermissions(file);
             }
@@ -78,12 +94,12 @@ public abstract class AbstractArchiveFileTreeElement<ENTRY, METADATA extends Arc
 
     @Override
     public RelativePath getRelativePath() {
-        return new RelativePath(!isDirectory(), safePathName(targetPath).split("/"));
+        return new RelativePath(!isDirectory(), safePathName(getTargetPath()).split("/"));
     }
 
     @Override
     public boolean isSymbolicLink() {
-        return archiveMetadata.preserveLinks && isLink();
+        return preserveLink && isLink();
     }
 
     protected boolean isLink() {
@@ -96,7 +112,7 @@ public abstract class AbstractArchiveFileTreeElement<ENTRY, METADATA extends Arc
 
     @Override
     public boolean isDirectory() {
-        return archiveMetadata.isDirectory(entry) || (!archiveMetadata.preserveLinks && isLink() && archiveMetadata.isDirectory(getResultEntry()));
+        return archiveMetadata.isDirectory(entry) || (!preserveLink && isLink() && archiveMetadata.isDirectory(getResultEntry()));
     }
 
     @Override
@@ -130,7 +146,6 @@ public abstract class AbstractArchiveFileTreeElement<ENTRY, METADATA extends Arc
 
     @Override
     public void stopVisiting() {
-        archiveMetadata.stopFlag.set(true);
+        stopFlag.set(true);
     }
-
 }

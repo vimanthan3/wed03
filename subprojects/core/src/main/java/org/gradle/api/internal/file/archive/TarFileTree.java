@@ -51,7 +51,7 @@ import java.util.function.Consumer;
 import static java.lang.String.format;
 import static org.gradle.internal.file.PathTraversalChecker.safePathName;
 
-public class TarFileTree extends AbstractArchiveFileTree {
+public class TarFileTree extends AbstractArchiveFileTree<TarArchiveEntry, TarFileTree.TarMetadata> {
     private final Provider<File> tarFileProvider;
     private final Provider<ReadableResourceInternal> resource;
     private final Chmod chmod;
@@ -98,26 +98,22 @@ public class TarFileTree extends AbstractArchiveFileTree {
             AtomicBoolean stopFlag = new AtomicBoolean();
 
             final boolean needsLinkPostProcessing;
-            final boolean needsLinkFollowing;
             LinksStrategy linksStrategy = visitor.linksStrategy();
             if (linksStrategy == LinksStrategy.PRESERVE_ALL) {
                 needsLinkPostProcessing = false;
-                needsLinkFollowing = false;
             } else if (linksStrategy == LinksStrategy.PRESERVE_RELATIVE || linksStrategy == LinksStrategy.ERROR) {
                 needsLinkPostProcessing = !hasMetadata;
-                needsLinkFollowing = false;
             } else {
                 needsLinkPostProcessing = true;
-                needsLinkFollowing = true;
             }
 
             // Metadata is needed ahead of time to know which files we need to extract to get the link targets
-            if (needsLinkFollowing && !hasMetadata) {
+            if (linksStrategy.preserveLinks() && !hasMetadata) {
                 withStream(true, tar -> {
                     try {
                         TarArchiveEntry entry;
                         while ((entry = tar.getNextTarEntry()) != null) {
-                            metadata.put(safePathName(entry.getName()), entry);
+                            metadata.put(entry.getName(), entry);
                         }
                     } catch (IOException e) {
                         throw cannotExpand(e);
@@ -129,21 +125,43 @@ public class TarFileTree extends AbstractArchiveFileTree {
             File expandedDir = getExpandedDir();
             withStream(!hasMetadata, tar -> {
                 try {
-                    TarVisitor tarVisitor = new TarVisitor(
-                        tar, tarFileProvider.get(), expandedDir, metadata,
-                        needsLinkPostProcessing, needsLinkFollowing, linkTargets,
-                        visitor, stopFlag, chmod
-                    );
-                    tarVisitor.visitAll();
-                    if (linkTargets == null && !stopFlag.get()) {
-                        linkTargets = tarVisitor.getAllLinkTargets();
-                    }
-                    hasMetadata = !stopFlag.get();
+                    TarMetadata tarMetadata = new TarMetadata(tar, tarFileProvider.get(), expandedDir, metadata, linkTargets);
+                    visitAll(tarMetadata, needsLinkPostProcessing, visitor, linksStrategy.preserveLinks(), stopFlag);
                 } catch (IOException e) {
                     throw cannotExpand(e);
                 }
             });
         });
+    }
+
+    public void visitAll(TarMetadata tarMetadata, boolean needsLinkPostProcessing, FileVisitor visitor, boolean preserveLinks, AtomicBoolean stopFlag) throws IOException {
+        TarArchiveEntry entry;
+        List<TarArchiveEntry> linksQueue = needsLinkPostProcessing ? new ArrayList<>() : null;
+
+        while (!stopFlag.get() && (entry = (TarArchiveEntry) tarMetadata.tar.getNextEntry()) != null) {
+            metadata.putIfAbsent(entry.getName(), entry);
+            if (needsLinkPostProcessing && entry.isSymbolicLink()) {
+                linksQueue.add(entry);
+            } else {
+                boolean extract = preserveLinks && entry.isFile() && tarMetadata.getAllLinkTargets().contains(entry.getName());
+                visitEntry(entry, tarMetadata, visitor, preserveLinks, stopFlag, extract);
+            }
+        }
+        tarMetadata.isStreaming = false;
+
+        // postprocessing links because we need metadata for the link following and copying, and we can't get it while streaming
+        if (linksQueue != null && !linksQueue.isEmpty()) {
+            for (TarArchiveEntry link : linksQueue) {
+                if (stopFlag.get()) {
+                    break;
+                }
+                visitSymlinkedEntry(link, link.getName(), tarMetadata, visitor, preserveLinks, stopFlag);
+            }
+        }
+        if (linkTargets == null && preserveLinks && !stopFlag.get()) {
+            linkTargets = tarMetadata.getAllLinkTargets();
+        }
+        hasMetadata = !stopFlag.get();
     }
 
     private void withStream(boolean checkStream, Consumer<NoCloseTarArchiveInputStream> action) {
@@ -238,32 +256,34 @@ public class TarFileTree extends AbstractArchiveFileTree {
         throw new IOException("Not a TAR archive");
     }
 
-    private static final class TarVisitor extends ArchiveVisitor<TarArchiveEntry> {
+    @Override
+    DetailsImpl createDetails(
+        TarArchiveEntry entry,
+        @Nullable String targetPath,
+        boolean preserveLink,
+        TarMetadata metadata,
+        AtomicBoolean stopFlag
+    ) {
+        return new DetailsImpl(entry, targetPath, preserveLink, metadata, stopFlag, chmod);
+    }
+
+    static final class TarMetadata extends ArchiveMetadata<TarArchiveEntry> {
         private final NoCloseTarArchiveInputStream tar;
         boolean isStreaming = true;
         private final TreeMap<String, TarArchiveEntry> metadata;
-        private final boolean needsLinkPostProcessing;
-        private final boolean needsLinkFollowing;
         @Nullable
         private Set<String> linkTargets;
 
-        public TarVisitor(
+        public TarMetadata(
             NoCloseTarArchiveInputStream tar,
             File tarFile,
             File expandedDir,
             TreeMap<String, TarArchiveEntry> metadata,
-            boolean needsLinkPostProcessing,
-            boolean needsLinkFollowing,
-            @Nullable Set<String> linkTargets,
-            FileVisitor visitor,
-            AtomicBoolean stopFlag,
-            Chmod chmod
+            @Nullable Set<String> linkTargets
         ) {
-            super(tarFile, expandedDir, visitor, stopFlag, chmod);
+            super(tarFile, expandedDir);
             this.tar = tar;
             this.metadata = metadata;
-            this.needsLinkPostProcessing = needsLinkPostProcessing;
-            this.needsLinkFollowing = needsLinkFollowing;
             this.linkTargets = linkTargets;
         }
 
@@ -274,7 +294,7 @@ public class TarFileTree extends AbstractArchiveFileTree {
 
         @Nullable
         Set<String> getAllLinkTargets() {
-            if (linkTargets == null && needsLinkFollowing) {
+            if (linkTargets == null) {
                 linkTargets = new HashSet<>();
                 for (TarArchiveEntry entry : metadata.values()) {
                     if (!entry.isSymbolicLink()) {
@@ -304,33 +324,6 @@ public class TarFileTree extends AbstractArchiveFileTree {
                 }
             }
             return linkTargets;
-        }
-
-        @Override
-        public void visitAll() throws IOException {
-            TarArchiveEntry entry;
-            List<TarArchiveEntry> linksQueue = needsLinkPostProcessing ? new ArrayList<>() : null;
-
-            while (!stopFlag.get() && (entry = (TarArchiveEntry) tar.getNextEntry()) != null) {
-                metadata.putIfAbsent(safePathName(entry.getName()), entry);
-                if (needsLinkPostProcessing && entry.isSymbolicLink()) {
-                    linksQueue.add(entry);
-                } else {
-                    boolean extract = needsLinkFollowing && entry.isFile() && getAllLinkTargets().contains(entry.getName());
-                    visitEntry(entry, entry.getName(), extract);
-                }
-            }
-            isStreaming = false;
-
-            // postprocessing links because we need metadata for the link following and copying, and we can't get it while streaming
-            if (linksQueue != null && !linksQueue.isEmpty()) {
-                for (TarArchiveEntry link : linksQueue) {
-                    if (stopFlag.get()) {
-                        break;
-                    }
-                    visitEntry(link, link.getName(), false);
-                }
-            }
         }
 
         @Override
@@ -374,25 +367,20 @@ public class TarFileTree extends AbstractArchiveFileTree {
         TarArchiveEntry getEntry(String path) {
             return metadata.get(path);
         }
-
-        @Override
-        DetailsImpl createDetails(
-            TarArchiveEntry tarArchiveEntry,
-            String targetPath
-        ) {
-            return new DetailsImpl(this, tarArchiveEntry, targetPath);
-        }
     }
 
-    private static final class DetailsImpl extends AbstractArchiveFileTreeElement<TarArchiveEntry, TarVisitor> {
+    private static final class DetailsImpl extends AbstractArchiveFileTreeElement<TarArchiveEntry, TarMetadata> {
         private boolean read = false;
 
         public DetailsImpl(
-            TarVisitor tarMetadata,
             TarArchiveEntry entry,
-            String targetPath
+            @Nullable String targetPath,
+            boolean preserveLink,
+            TarMetadata tarMetadata,
+            AtomicBoolean stopFlag,
+            Chmod chmod
         ) {
-            super(tarMetadata, entry, targetPath);
+            super(entry, targetPath, preserveLink, tarMetadata, stopFlag, chmod);
         }
 
         @Override
@@ -408,7 +396,7 @@ public class TarFileTree extends AbstractArchiveFileTree {
             }
 
             if (!isLink() || getSymbolicLinkDetails().targetExists()) {
-                File unpackedTarget = new File(archiveMetadata.expandedDir, getResultEntry().getName());
+                File unpackedTarget = new File(archiveMetadata.expandedDir, safePathName(getResultEntry().getName()));
                 return GFileUtils.openInputStream(unpackedTarget);
             }
 

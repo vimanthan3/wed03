@@ -33,12 +33,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.lang.String.format;
 
-public class ZipFileTree extends AbstractArchiveFileTree {
+public class ZipFileTree extends AbstractArchiveFileTree<ZipArchiveEntry, ZipFileTree.ZipMetadata> {
     private final Provider<File> fileProvider;
     private final Chmod chmod;
     private final DirectoryFileTreeFactory directoryFileTreeFactory;
@@ -87,8 +88,12 @@ public class ZipFileTree extends AbstractArchiveFileTree {
             AtomicBoolean stopFlag = new AtomicBoolean();
             File expandedDir = getExpandedDir();
             try (ZipFile zip = new ZipFile(zipFile)) {
-                ZipVisitor zipVisitor = new ZipVisitor(zip, zipFile, expandedDir, visitor, stopFlag, chmod);
-                zipVisitor.visitAll();
+                ZipMetadata metadata = new ZipMetadata(zip, zipFile, expandedDir);
+                Iterator<ZipArchiveEntry> it = metadata.getEntries().values().iterator();
+                while (it.hasNext() && !stopFlag.get()) {
+                    ZipArchiveEntry entry = it.next();
+                    visitEntry(entry, metadata, visitor, visitor.linksStrategy().preserveLinks(), stopFlag, false);
+                }
             } catch (GradleException e) {
                 throw e;
             } catch (Exception e) {
@@ -108,11 +113,22 @@ public class ZipFileTree extends AbstractArchiveFileTree {
         return new File(decompressionCache.getBaseDir(), expandedDirName);
     }
 
-    private static final class ZipVisitor extends ArchiveVisitor<ZipArchiveEntry> {
+    @Override
+    DetailsImpl createDetails(
+        ZipArchiveEntry zipArchiveEntry,
+        @Nullable String targetPath,
+        boolean preserveLink,
+        ZipMetadata metadata,
+        AtomicBoolean stopFlag
+    ) {
+        return new DetailsImpl(zipArchiveEntry, targetPath, preserveLink, metadata, stopFlag, chmod);
+    }
+
+    static final class ZipMetadata extends ArchiveMetadata<ZipArchiveEntry> {
         private final ZipFile zip;
 
-        public ZipVisitor(ZipFile zip, File zipFile, File expandedDir, FileVisitor visitor, AtomicBoolean stopFlag, Chmod chmod) {
-            super(zipFile, expandedDir, visitor, stopFlag, chmod);
+        public ZipMetadata(ZipFile zip, File zipFile, File expandedDir) {
+            super(zipFile, expandedDir);
             this.zip = zip;
         }
 
@@ -177,24 +193,19 @@ public class ZipFileTree extends AbstractArchiveFileTree {
         ZipArchiveEntry getEntry(String path) {
             return zip.getEntry(path);
         }
-
-        @Override
-        DetailsImpl createDetails(
-            ZipArchiveEntry zipArchiveEntry,
-            String targetPath
-        ) {
-            return new DetailsImpl(this, zipArchiveEntry, targetPath);
-        }
     }
 
-    private static final class DetailsImpl extends AbstractArchiveFileTreeElement<ZipArchiveEntry, ZipVisitor> {
+    private static final class DetailsImpl extends AbstractArchiveFileTreeElement<ZipArchiveEntry, ZipMetadata> {
 
         public DetailsImpl(
-            ZipVisitor zipMetadata,
             ZipArchiveEntry entry,
-            String targetPath
+            @Nullable String targetPath,
+            boolean preserveLink,
+            ZipMetadata zipMetadata,
+            AtomicBoolean stopFlag,
+            Chmod chmod
         ) {
-            super(zipMetadata, entry, targetPath);
+            super(entry, targetPath, preserveLink, zipMetadata, stopFlag, chmod);
         }
 
         @Override

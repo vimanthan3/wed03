@@ -25,8 +25,11 @@ import org.gradle.cache.internal.DecompressionCache
 import org.gradle.cache.internal.TestCaches
 import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
 import org.gradle.util.TestUtil
+import org.jetbrains.annotations.Nullable
 import org.junit.Rule
 import spock.lang.Specification
+
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Tests core functionality in {@link AbstractArchiveFileTree} using a minimal test implementation.
@@ -50,7 +53,7 @@ class AbstractArchiveFileTreeSpec extends Specification {
         0 * _
     }
 
-    static class TestArchiveFileTree extends AbstractArchiveFileTree {
+    static class TestArchiveFileTree extends AbstractArchiveFileTree<Object, ArchiveMetadata<Object>> {
         File backingFile
         final String displayName = "<display>"
 
@@ -72,6 +75,11 @@ class AbstractArchiveFileTreeSpec extends Specification {
         @Override
         protected Provider<File> getBackingFileProvider() {
             TestUtil.providerFactory().provider { backingFile }
+        }
+
+        @Override
+        def AbstractArchiveFileTreeElement<Object, ArchiveMetadata<Object>> createDetails(Object o, @Nullable String targetPath, boolean preserveLink, ArchiveMetadata<Object> metadata, AtomicBoolean stopFlag) {
+            return null
         }
     }
 }
