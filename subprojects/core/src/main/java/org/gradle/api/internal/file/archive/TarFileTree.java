@@ -57,9 +57,6 @@ public class TarFileTree extends AbstractArchiveFileTree<TarArchiveEntry, TarFil
     private final Chmod chmod;
     private final DirectoryFileTreeFactory directoryFileTreeFactory;
     private final FileHasher fileHasher;
-    private boolean hasMetadata = false;
-    private final TreeMap<String, TarArchiveEntry> metadata = new TreeMap<>();
-    private Set<String> linkTargets = null;
 
     public TarFileTree(
         Provider<File> tarFileProvider,
@@ -99,16 +96,16 @@ public class TarFileTree extends AbstractArchiveFileTree<TarArchiveEntry, TarFil
 
             final boolean needsLinkPostProcessing;
             LinksStrategy linksStrategy = visitor.linksStrategy();
-            if (linksStrategy == LinksStrategy.PRESERVE_ALL) {
+            if (linksStrategy == LinksStrategy.PRESERVE_ALL || linksStrategy == LinksStrategy.ERROR) {
                 needsLinkPostProcessing = false;
-            } else if (linksStrategy == LinksStrategy.PRESERVE_RELATIVE || linksStrategy == LinksStrategy.ERROR) {
-                needsLinkPostProcessing = !hasMetadata;
             } else {
+                // we need metadata to know link targets
                 needsLinkPostProcessing = true;
             }
 
+            TreeMap<String, TarArchiveEntry> metadata = new TreeMap<>();
             // Metadata is needed ahead of time to know which files we need to extract to get the link targets
-            if (linksStrategy.preserveLinks() && !hasMetadata) {
+            if (!linksStrategy.preserveLinks()) {
                 withStream(true, tar -> {
                     try {
                         TarArchiveEntry entry;
@@ -119,13 +116,12 @@ public class TarFileTree extends AbstractArchiveFileTree<TarArchiveEntry, TarFil
                         throw cannotExpand(e);
                     }
                 });
-                hasMetadata = true;
             }
 
             File expandedDir = getExpandedDir();
-            withStream(!hasMetadata, tar -> {
+            withStream(linksStrategy.preserveLinks(), tar -> {
                 try {
-                    TarMetadata tarMetadata = new TarMetadata(tar, tarFileProvider.get(), expandedDir, metadata, linkTargets);
+                    TarMetadata tarMetadata = new TarMetadata(tar, tarFileProvider.get(), expandedDir, metadata);
                     visitAll(tarMetadata, needsLinkPostProcessing, visitor, linksStrategy.preserveLinks(), stopFlag);
                 } catch (IOException e) {
                     throw cannotExpand(e);
@@ -139,11 +135,11 @@ public class TarFileTree extends AbstractArchiveFileTree<TarArchiveEntry, TarFil
         List<TarArchiveEntry> linksQueue = needsLinkPostProcessing ? new ArrayList<>() : null;
 
         while (!stopFlag.get() && (entry = (TarArchiveEntry) tarMetadata.tar.getNextEntry()) != null) {
-            metadata.putIfAbsent(entry.getName(), entry);
+            tarMetadata.metadata.putIfAbsent(entry.getName(), entry);
             if (needsLinkPostProcessing && entry.isSymbolicLink()) {
                 linksQueue.add(entry);
             } else {
-                boolean extract = preserveLinks && entry.isFile() && tarMetadata.getAllLinkTargets().contains(entry.getName());
+                boolean extract = !preserveLinks && entry.isFile() && tarMetadata.getAllLinkTargets().contains(entry.getName());
                 visitEntry(entry, tarMetadata, visitor, preserveLinks, stopFlag, extract);
             }
         }
@@ -158,10 +154,6 @@ public class TarFileTree extends AbstractArchiveFileTree<TarArchiveEntry, TarFil
                 visitSymlinkedEntry(link, link.getName(), tarMetadata, visitor, preserveLinks, stopFlag);
             }
         }
-        if (linkTargets == null && preserveLinks && !stopFlag.get()) {
-            linkTargets = tarMetadata.getAllLinkTargets();
-        }
-        hasMetadata = !stopFlag.get();
     }
 
     private void withStream(boolean checkStream, Consumer<NoCloseTarArchiveInputStream> action) {
@@ -271,20 +263,17 @@ public class TarFileTree extends AbstractArchiveFileTree<TarArchiveEntry, TarFil
         private final NoCloseTarArchiveInputStream tar;
         boolean isStreaming = true;
         private final TreeMap<String, TarArchiveEntry> metadata;
-        @Nullable
         private Set<String> linkTargets;
 
         public TarMetadata(
             NoCloseTarArchiveInputStream tar,
             File tarFile,
             File expandedDir,
-            TreeMap<String, TarArchiveEntry> metadata,
-            @Nullable Set<String> linkTargets
+            TreeMap<String, TarArchiveEntry> metadata
         ) {
             super(tarFile, expandedDir);
             this.tar = tar;
             this.metadata = metadata;
-            this.linkTargets = linkTargets;
         }
 
         @Override
@@ -292,7 +281,6 @@ public class TarFileTree extends AbstractArchiveFileTree<TarArchiveEntry, TarFil
             return metadata; //NOTE: may be partially filled
         }
 
-        @Nullable
         Set<String> getAllLinkTargets() {
             if (linkTargets == null) {
                 linkTargets = new HashSet<>();
