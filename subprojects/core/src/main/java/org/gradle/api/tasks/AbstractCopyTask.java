@@ -33,7 +33,6 @@ import org.gradle.api.file.FileTreeElement;
 import org.gradle.api.file.LinksStrategy;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.internal.DocumentationRegistry;
-import org.gradle.api.internal.TaskInputsInternal;
 import org.gradle.api.internal.file.FileLookup;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.internal.file.collections.DirectoryFileTreeFactory;
@@ -84,25 +83,23 @@ public abstract class AbstractCopyTask extends ConventionTask implements CopySpe
             CopySpecResolver resolver = spec.buildResolverRelativeToParent(parentResolver);
             String specPropertyName = specPropertyNameBuilder.toString();
 
-            TaskInputsInternal inputs = getInputs();
-
-            inputs.files((Callable<FileTree>) resolver::getSource)
+            getInputs().files((Callable<FileTree>) resolver::getSource)
                 .withPropertyName(specPropertyName)
                 .withPathSensitivity(PathSensitivity.RELATIVE)
                 .ignoreEmptyDirectories(false)
                 .skipWhenEmpty();
 
-            inputs.expectProperties(8);
-            inputs.property(specPropertyName + ".destPath", (Callable<String>) () -> resolver.getDestPath().getPathString());
-            inputs.property(specPropertyName + ".caseSensitive", (Callable<Boolean>) spec::isCaseSensitive);
-            inputs.property(specPropertyName + ".includeEmptyDirs", (Callable<Boolean>) spec::getIncludeEmptyDirs);
-            inputs.property(specPropertyName + ".duplicatesStrategy", (Callable<DuplicatesStrategy>) spec::getDuplicatesStrategy);
-            inputs.property(specPropertyName + ".dirPermissions", spec.getDirPermissions().map(FilePermissions::toUnixNumeric))
+            getInputs().expectProperties(8);
+            getInputs().property(specPropertyName + ".destPath", (Callable<String>) () -> resolver.getDestPath().getPathString());
+            getInputs().property(specPropertyName + ".caseSensitive", (Callable<Boolean>) spec::isCaseSensitive);
+            getInputs().property(specPropertyName + ".includeEmptyDirs", (Callable<Boolean>) spec::getIncludeEmptyDirs);
+            getInputs().property(specPropertyName + ".duplicatesStrategy", (Callable<DuplicatesStrategy>) spec::getDuplicatesStrategy);
+            getInputs().property(specPropertyName + ".dirPermissions", spec.getDirPermissions().map(FilePermissions::toUnixNumeric))
                 .optional(true);
-            inputs.property(specPropertyName + ".filePermissions", spec.getFilePermissions().map(FilePermissions::toUnixNumeric))
+            getInputs().property(specPropertyName + ".filePermissions", spec.getFilePermissions().map(FilePermissions::toUnixNumeric))
                 .optional(true);
-            inputs.property(specPropertyName + ".filteringCharset", (Callable<String>) spec::getFilteringCharset);
-            inputs.property(specPropertyName + ".linksStrategy", spec.getLinksStrategy()).optional(true);
+            getInputs().property(specPropertyName + ".filteringCharset", (Callable<String>) spec::getFilteringCharset);
+            getInputs().property(specPropertyName + ".linksStrategy", spec.getLinksStrategy()).optional(true);
         });
         this.getOutputs().doNotCacheIf(
             "Has custom actions",
