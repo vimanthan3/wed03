@@ -26,4 +26,6 @@ public interface TaskInputsInternal extends TaskInputs, TaskDependencyContainer 
      * Calls the corresponding visitor methods for all inputs added via the runtime API.
      */
     void visitRegisteredProperties(PropertyVisitor visitor);
+
+    void expectProperties(int count);
 }
