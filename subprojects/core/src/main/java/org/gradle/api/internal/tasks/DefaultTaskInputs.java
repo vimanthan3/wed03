@@ -58,7 +58,7 @@ public class DefaultTaskInputs implements TaskInputsInternal {
     private final TaskMutator taskMutator;
     private final PropertyWalker propertyWalker;
     private final FileCollectionFactory fileCollectionFactory;
-    private final List<TaskInputPropertyRegistration> registeredProperties = new ArrayList<>();
+    private final List<TaskInputPropertyRegistration> registeredProperties = new ArrayList<>(8);
     private final FilePropertyContainer<TaskInputFilePropertyRegistration> registeredFileProperties = FilePropertyContainer.create();
     private final TaskInputs deprecatedThis;
 
