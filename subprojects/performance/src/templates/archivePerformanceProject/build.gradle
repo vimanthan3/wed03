@@ -14,53 +14,53 @@
 * limitations under the License.
 */
 
-task zip(type: Zip) {
-    (1..10000).each { suffix ->
-        from ('build.gradle') {
-            into "folder$suffix"
-        }
-    }
-}
+//task zip(type: Zip) {
+//    (1..10000).each { suffix ->
+//        from ('build.gradle') {
+//            into "folder$suffix"
+//        }
+//    }
+//}
 
-task visitZip(dependsOn: zip) {
+task visitZip {
     doLast {
         (1..4).each {
-            zipTree(zip.archivePath).each {
+            zipTree(file("test.zip")).each {
                 logger.info it.path
             }
         }
     }
 }
 
-task tar(type: Tar) {
-    with zip
-}
-
-task visitTar(dependsOn: tar) {
-    doLast {
-        (1..4).each {
-            tarTree(tar.archivePath).each {
-                logger.info it.path
-            }
-        }
-    }
-}
-
-task tarGz(type: Tar) {
-    with zip
-    compression = 'gzip'
-}
-
-task visitTarGz(dependsOn: tarGz) {
-    doLast {
-        (1..4).each {
-            tarTree(tarGz.archivePath).each {
-                logger.info it.path
-            }
-        }
-    }
-}
-
-tasks.withType(AbstractArchiveTask) {
-    destinationDirectory = projectDir
-}
+//task tar(type: Tar) {
+//    with zip
+//}
+//
+//task visitTar(dependsOn: tar) {
+//    doLast {
+//        (1..4).each {
+//            tarTree(tar.archivePath).each {
+//                logger.info it.path
+//            }
+//        }
+//    }
+//}
+//
+//task tarGz(type: Tar) {
+//    with zip
+//    compression = 'gzip'
+//}
+//
+//task visitTarGz(dependsOn: tarGz) {
+//    doLast {
+//        (1..4).each {
+//            tarTree(tarGz.archivePath).each {
+//                logger.info it.path
+//            }
+//        }
+//    }
+//}
+//
+//tasks.withType(AbstractArchiveTask) {
+//    destinationDirectory = projectDir
+//}

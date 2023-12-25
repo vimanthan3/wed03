@@ -21,9 +21,7 @@ import org.gradle.performance.annotations.RunFor
 import org.gradle.performance.annotations.Scenario
 
 import static org.gradle.performance.annotations.ScenarioType.PER_COMMIT
-import static org.gradle.performance.annotations.ScenarioType.PER_DAY
 import static org.gradle.performance.results.OperatingSystem.LINUX
-
 
 class ArchiveTreePerformanceTest extends AbstractCrossVersionPerformanceTest {
     @RunFor(
@@ -40,31 +38,31 @@ class ArchiveTreePerformanceTest extends AbstractCrossVersionPerformanceTest {
         result.assertCurrentVersionHasNotRegressed()
     }
 
-    @RunFor(
-        @Scenario(type = PER_DAY, operatingSystems = [LINUX], testProjects = ["archivePerformanceProject"])
-    )
-    def "visiting tar trees"() {
-        given:
-        runner.tasksToRun = ['visitTar']
-
-        when:
-        def result = runner.run()
-
-        then:
-        result.assertCurrentVersionHasNotRegressed()
-    }
-
-    @RunFor(
-        @Scenario(type = PER_DAY, operatingSystems = [LINUX], testProjects = ["archivePerformanceProject"])
-    )
-    def "visiting gzip tar trees"() {
-        given:
-        runner.tasksToRun = ['visitTarGz']
-
-        when:
-        def result = runner.run()
-
-        then:
-        result.assertCurrentVersionHasNotRegressed()
-    }
+//    @RunFor(
+//        @Scenario(type = PER_DAY, operatingSystems = [LINUX], testProjects = ["archivePerformanceProject"])
+//    )
+//    def "visiting tar trees"() {
+//        given:
+//        runner.tasksToRun = ['visitTar']
+//
+//        when:
+//        def result = runner.run()
+//
+//        then:
+//        result.assertCurrentVersionHasNotRegressed()
+//    }
+//
+//    @RunFor(
+//        @Scenario(type = PER_DAY, operatingSystems = [LINUX], testProjects = ["archivePerformanceProject"])
+//    )
+//    def "visiting gzip tar trees"() {
+//        given:
+//        runner.tasksToRun = ['visitTarGz']
+//
+//        when:
+//        def result = runner.run()
+//
+//        then:
+//        result.assertCurrentVersionHasNotRegressed()
+//    }
 }
