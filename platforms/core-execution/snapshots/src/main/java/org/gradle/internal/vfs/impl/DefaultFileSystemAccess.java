@@ -120,13 +120,13 @@ public class DefaultFileSystemAccess implements FileSystemAccess, FileSystemDefa
                             () -> virtualFileSystem.findSnapshot(location)
                                 .orElseGet(() -> {
                                     String linkTarget = null;
-                                    if (fileMetadata.getAccessType() == FileMetadata.AccessType.VIA_SYMLINK) {
-                                        try {
-                                            linkTarget = Files.readSymbolicLink(file.toPath()).toString();
-                                        } catch (IOException e) {
-                                            // leave as null
-                                        }
-                                    }
+//                                    if (fileMetadata.getAccessType() == FileMetadata.AccessType.VIA_SYMLINK) {
+//                                        try {
+//                                            linkTarget = Files.readSymbolicLink(file.toPath()).toString();
+//                                        } catch (IOException e) {
+//                                            // leave as null
+//                                        }
+//                                    }
                                     HashCode hashCode = hasher.hash(file, fileMetadata.getLength(), fileMetadata.getLastModified(), linkTarget);
                                     return vfsStorer.store(new RegularFileSnapshot(location, file.getName(), hashCode, fileMetadata));
                                 })));

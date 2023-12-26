@@ -161,12 +161,12 @@ public class PatternSetSnapshottingFilter implements SnapshottingFilter {
         @Nullable
         @Override
         public SymbolicLinkDetails getSymbolicLinkDetails() {
-            Path path = getFile().toPath();
-            if (Files.isSymbolicLink(path)) {
-                return new DefaultSymbolicLinkDetails(path, getRelativePath().getSegments().length);
-            } else {
+//            Path path = getFile().toPath();
+//            if (Files.isSymbolicLink(path)) {
+//                return new DefaultSymbolicLinkDetails(path, getRelativePath().getSegments().length);
+//            } else {
                 return null;
-            }
+//            }
         }
     }
 
@@ -259,11 +259,11 @@ public class PatternSetSnapshottingFilter implements SnapshottingFilter {
         @Nullable
         @Override
         public SymbolicLinkDetails getSymbolicLinkDetails() {
-            if (Files.isSymbolicLink(path)) {
-                return new DefaultSymbolicLinkDetails(path, getRelativePath().getSegments().length);
-            } else {
+//            if (Files.isSymbolicLink(path)) {
+//                return new DefaultSymbolicLinkDetails(path, getRelativePath().getSegments().length);
+//            } else {
                 return null;
-            }
+            //}
         }
     }
 }

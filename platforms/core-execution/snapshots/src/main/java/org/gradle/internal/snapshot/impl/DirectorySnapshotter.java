@@ -452,14 +452,14 @@ public class DirectorySnapshotter {
             long lastModified = targetAttrs.lastModifiedTime().toMillis();
             long fileLength = targetAttrs.size();
             String linkTarget = null;
-            if (sourceAttrs.isSymbolicLink()) {
-                try {
-                    linkTarget = Files.readSymbolicLink(absoluteFilePath).toString();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                lastModified = sourceAttrs.lastModifiedTime().toMillis();
-            }
+//            if (sourceAttrs.isSymbolicLink()) {
+//                try {
+//                    linkTarget = Files.readSymbolicLink(absoluteFilePath).toString();
+//                } catch (IOException e) {
+//                    throw new RuntimeException(e);
+//                }
+//                lastModified = sourceAttrs.lastModifiedTime().toMillis();
+//            }
 
             FileMetadata metadata = DefaultFileMetadata.file(lastModified, fileLength, accessType);
             HashCode hash = hasher.hash(absoluteFilePath.toFile(), fileLength, lastModified, linkTarget);
