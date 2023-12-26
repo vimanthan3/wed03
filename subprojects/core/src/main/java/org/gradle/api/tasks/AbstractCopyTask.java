@@ -98,7 +98,7 @@ public abstract class AbstractCopyTask extends ConventionTask implements CopySpe
             getInputs().property(specPropertyName + ".filePermissions", spec.getFilePermissions().map(FilePermissions::toUnixNumeric))
                 .optional(true);
             getInputs().property(specPropertyName + ".filteringCharset", (Callable<String>) spec::getFilteringCharset);
-            getInputs().property(specPropertyName + ".linksStrategy", spec.getLinksStrategy()).optional(true);
+            //getInputs().property(specPropertyName + ".linksStrategy", spec.getLinksStrategy()).optional(true);
         });
         this.getOutputs().doNotCacheIf(
             "Has custom actions",
