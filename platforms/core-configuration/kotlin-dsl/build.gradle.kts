@@ -44,6 +44,10 @@ dependencies {
     implementation(libs.inject)
     implementation(libs.asm)
 
+    runtimeOnly(libs.futureKotlin("build-tools-impl")) {
+        isTransitive = false
+    }
+
     implementation(libs.futureKotlin("compiler-embeddable"))
     implementation(libs.futureKotlin("script-runtime"))
     implementation(libs.futureKotlin("daemon-embeddable"))

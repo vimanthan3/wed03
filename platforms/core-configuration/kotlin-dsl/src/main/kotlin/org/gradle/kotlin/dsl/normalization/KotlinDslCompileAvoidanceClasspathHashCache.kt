@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package org.gradle.internal.service.scopes;
+package org.gradle.kotlin.dsl.normalization
 
-public interface Scope {
-    /**
-     * These services are reused across builds in the same process.
-     *
-     * <p>Global services are visible to all other services.</p>
-     */
-    interface Global extends Scope {} // TODO: why is this not in Scopes as all the rest?
+import org.gradle.cache.IndexedCache
+import org.gradle.internal.hash.HashCode
+
+
+class KotlinDslCompileAvoidanceClasspathHashCache(val cache: IndexedCache<HashCode, HashCode>) {
+
+
+    fun getHash(checksum: HashCode, supplier: () -> HashCode) = cache.get(checksum, supplier)
 }
