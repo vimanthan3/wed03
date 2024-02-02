@@ -154,8 +154,11 @@ class ConfigurationCacheFingerprintChecker(private val host: Host) {
             is ConfigurationCacheFingerprint.WorkInputs -> input.run {
                 val currentFingerprint = host.fingerprintOf(fileSystemInputs)
                 if (currentFingerprint != fileSystemInputsFingerprint) {
+                    logger.info("${fileSystemInputs.displayName} input to $workDisplayName contains " +
+                        "${fileSystemInputs.files.joinToString(", ") { it.absolutePath }}")
                     // TODO: summarize what has changed (see https://github.com/gradle/configuration-cache/issues/282)
-                    return "an input to $workDisplayName has changed"
+                    return "a fingerprint of a ${fileSystemInputs.displayName} input with " +
+                        "${fileSystemInputs.files.size} files to $workDisplayName has changed"
                 }
             }
             is ConfigurationCacheFingerprint.InputFile -> input.run {
