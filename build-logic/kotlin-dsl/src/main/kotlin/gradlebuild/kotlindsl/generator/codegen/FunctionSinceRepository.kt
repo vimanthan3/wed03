@@ -23,7 +23,6 @@ import com.thoughtworks.qdox.model.JavaClass
 import org.gradle.internal.classloader.DefaultClassLoaderFactory
 import org.gradle.internal.classpath.DefaultClassPath
 import java.io.File
-import java.lang.IllegalArgumentException
 import java.net.URLClassLoader
 
 
@@ -54,8 +53,7 @@ class FunctionSinceRepository(classPath: Set<File>, sourcePath: Set<File>) : Aut
 
         val javaFunction = parsedJavaFunctionOf(functionSignature)
 
-        val matchingType = builder.sources
-            .flatMap { it.classes }
+        val matchingType = builder.allSourceClasses
             .singleOrNull { javaFunction.typeName == it.binaryName }
             ?: throw IllegalArgumentException("Class for function '$functionSignature' not found in since repository!")
 
@@ -64,9 +62,14 @@ class FunctionSinceRepository(classPath: Set<File>, sourcePath: Set<File>) : Aut
             .singleOrNull()
             ?: throw IllegalArgumentException("Function '$functionSignature' not found in @since repository!")
 
-
         return matchingFunction.since ?: matchingType.since
     }
+
+    private
+    val JavaProjectBuilder.allSourceClasses
+        get() = sources.asSequence()
+            .flatMap { it.classes }
+            .flatMap { sequenceOf(it) + it.nestedClasses }
 
     private
     fun parsedJavaFunctionOf(functionSignature: String): JavaFunction<JavaClass> =
