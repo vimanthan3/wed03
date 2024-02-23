@@ -51,7 +51,7 @@ class ToolingApiConnector {
         connector."$name"
     }
 
-    def forProjectDirectory(File projectDir) {
+    GradleConnector forProjectDirectory(File projectDir) {
         connector.forProjectDirectory(projectDir)
         connector
     }
