@@ -103,8 +103,6 @@ Method <org.gradle.api.credentials.PasswordCredentials.getPassword()> does not h
 Method <org.gradle.api.credentials.PasswordCredentials.getUsername()> does not have raw return type assignable to org.gradle.api.provider.Property in (PasswordCredentials.java:0)
 Method <org.gradle.api.file.ConfigurableFileTree.getBuiltBy()> does not have raw return type assignable to org.gradle.api.provider.Property in (ConfigurableFileTree.java:0)
 Method <org.gradle.api.file.ConfigurableFileTree.getDir()> does not have raw return type assignable to org.gradle.api.provider.Property in (ConfigurableFileTree.java:0)
-Method <org.gradle.api.file.CopyProcessingSpec.getDirMode()> does not have raw return type assignable to org.gradle.api.provider.Property in (CopyProcessingSpec.java:0)
-Method <org.gradle.api.file.CopyProcessingSpec.getFileMode()> does not have raw return type assignable to org.gradle.api.provider.Property in (CopyProcessingSpec.java:0)
 Method <org.gradle.api.file.CopySpec.getDuplicatesStrategy()> does not have raw return type assignable to org.gradle.api.provider.Property in (CopySpec.java:0)
 Method <org.gradle.api.file.CopySpec.getFilteringCharset()> does not have raw return type assignable to org.gradle.api.provider.Property in (CopySpec.java:0)
 Method <org.gradle.api.file.CopySpec.getIncludeEmptyDirs()> does not have raw return type assignable to org.gradle.api.provider.Property in (CopySpec.java:0)
