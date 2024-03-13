@@ -9,6 +9,70 @@
             ]
         },
         {
+            "type": "org.gradle.api.file.CopyProcessingSpec",
+            "member": "Method org.gradle.api.file.CopyProcessingSpec.getDirMode()",
+            "acceptation": "Removing deprecated API",
+            "changes": [
+                "Method has been removed"
+            ]
+        },
+        {
+            "type": "org.gradle.api.file.CopyProcessingSpec",
+            "member": "Method org.gradle.api.file.CopyProcessingSpec.getFileMode()",
+            "acceptation": "Removing deprecated API",
+            "changes": [
+                "Method has been removed"
+            ]
+        },
+        {
+            "type": "org.gradle.api.file.CopyProcessingSpec",
+            "member": "Method org.gradle.api.file.CopyProcessingSpec.setDirMode(java.lang.Integer)",
+            "acceptation": "[ADD YOUR CUSTOM REASON HERE]",
+            "changes": [
+                "Method has been removed"
+            ]
+        },
+        {
+            "type": "org.gradle.api.file.CopyProcessingSpec",
+            "member": "Method org.gradle.api.file.CopyProcessingSpec.setFileMode(java.lang.Integer)",
+            "acceptation": "[ADD YOUR CUSTOM REASON HERE]",
+            "changes": [
+                "Method has been removed"
+            ]
+        },
+        {
+            "type": "org.gradle.api.file.FileCopyDetails",
+            "member": "Method org.gradle.api.file.FileCopyDetails.setMode(int)",
+            "acceptation": "[ADD YOUR CUSTOM REASON HERE]",
+            "changes": [
+                "Method has been removed"
+            ]
+        },
+        {
+            "type": "org.gradle.api.file.FileTreeElement",
+            "member": "Method org.gradle.api.file.FileTreeElement.getMode()",
+            "acceptation": "[ADD YOUR CUSTOM REASON HERE]",
+            "changes": [
+                "Method has been removed"
+            ]
+        },
+        {
+            "type": "org.gradle.api.tasks.AbstractCopyTask",
+            "member": "Method org.gradle.api.tasks.AbstractCopyTask.setDirMode(java.lang.Integer)",
+            "acceptation": "[ADD YOUR CUSTOM REASON HERE]",
+            "changes": [
+                "Method has been removed"
+            ]
+        },
+        {
+            "type": "org.gradle.api.tasks.AbstractCopyTask",
+            "member": "Method org.gradle.api.tasks.AbstractCopyTask.setFileMode(java.lang.Integer)",
+            "acceptation": "[ADD YOUR CUSTOM REASON HERE]",
+            "changes": [
+                "Method has been removed"
+            ]
+        },
+        {
             "type": "org.gradle.tooling.events.problems.ProblemDescriptor",
             "member": "Method org.gradle.tooling.events.problems.ProblemDescriptor.getDetails()",
             "acceptation": "This is an incubating API and therefore the change is acceptable",
