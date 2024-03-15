@@ -142,7 +142,7 @@ class JdkCacheDirectoryTest extends Specification {
         then:
         installedJdk.exists()
         installedJdk.getParentFile().getName() == "jdks"
-        installedJdk.getName() == "ibm-11-arch-${os()}"
+        installedJdk.getName() == "ibm-11-arch-${os()}.2"
         new File(installedJdk, JdkCacheDirectory.LEGACY_MARKER_FILE).exists()
         new File(installedJdk, JdkCacheDirectory.MARKER_FILE).exists()
         new File(installedJdk, "jdk/file").exists()
@@ -158,7 +158,7 @@ class JdkCacheDirectoryTest extends Specification {
         then:
         installedJdk.exists()
         installedJdk.getParentFile().getName() == "jdks"
-        installedJdk.getName() == "ibm-11-arch-${os()}"
+        installedJdk.getName() == "ibm-11-arch-${os()}.2"
         new File(installedJdk, JdkCacheDirectory.LEGACY_MARKER_FILE).exists()
         new File(installedJdk, JdkCacheDirectory.MARKER_FILE).exists()
         new File(installedJdk, "jdk-123/file").exists()
@@ -174,7 +174,7 @@ class JdkCacheDirectoryTest extends Specification {
 
         then:
         installedJdk.exists()
-        new File(installedJdk, "jdk-with-symlinks/bin/file").exists()
+        new File(installedJdk, "jdk-with-symlinks.2/bin/file").exists()
 
         //TODO: completely wrong; the uncompressed archive should look like this:
         // .

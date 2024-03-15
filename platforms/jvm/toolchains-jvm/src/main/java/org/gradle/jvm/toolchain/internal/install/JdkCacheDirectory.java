@@ -247,7 +247,7 @@ public class JdkCacheDirectory {
         String os = OperatingSystem.current().getFamilyName();
         return String.format("%s-%s-%s-%s", vendor, version, architecture, os)
                 .replaceAll("[^a-zA-Z0-9\\-]", "_")
-                .toLowerCase();
+                .toLowerCase() + ".2";
     }
 
     private File unpack(File jdkArchive) {
