@@ -56,9 +56,10 @@ public final class DefaultLocalComponentGraphResolveMetadata implements LocalCom
     private final ModuleVersionIdentifier moduleVersionId;
     private final String status;
     private final AttributesSchemaInternal attributesSchema;
+
+    // TODO: All this lazy state should be moved to DefaultLocalComponentGraphResolveState
     private final ConfigurationMetadataFactory configurationFactory;
     private final Transformer<LocalComponentArtifactMetadata, LocalComponentArtifactMetadata> artifactTransformer;
-
     private final Map<String, LocalConfigurationMetadata> allConfigurations = new LinkedHashMap<>();
     private List<? extends VariantGraphResolveMetadata> consumableConfigurations;
 
