@@ -33,7 +33,6 @@ import org.gradle.internal.declarativedsl.language.Assignment
 import org.gradle.internal.declarativedsl.language.FunctionCall
 import org.gradle.internal.declarativedsl.language.LanguageTreeResult
 import org.gradle.internal.declarativedsl.language.SourceData
-import org.gradle.internal.declarativedsl.language.SourceIdentifier
 
 
 fun resolvedDocument(
@@ -57,7 +56,7 @@ fun resolvedDocument(
     val resolver = DocumentResolver(trace, SchemaTypeRefContext(schema), strictReceiverChecks)
     return ResolvedDeclarativeDocumentImpl(
         document.content.map(resolver::resolvedNode),
-        document.sourceIdentifier
+        document.sourceData
     )
 }
 
@@ -215,7 +214,7 @@ class DocumentResolver(
 private
 class ResolvedDeclarativeDocumentImpl(
     override val content: Collection<ResolvedNode>,
-    override val sourceIdentifier: SourceIdentifier
+    override val sourceData: SourceData
 ) : ResolvedDeclarativeDocument {
     sealed interface ResolvedNode : ResolvedDeclarativeDocument.ResolvedDocumentNode {
         data class ResolvedProperty(
