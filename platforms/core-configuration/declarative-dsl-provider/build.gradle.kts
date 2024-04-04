@@ -30,7 +30,6 @@ dependencies {
     testImplementation(libs.mockitoKotlin2)
 
     implementation(project(":resources"))
-    implementation(libs.futureKotlin("compiler-embeddable"))
     implementation(libs.futureKotlin("reflect"))
 
     integTestImplementation(project(":internal-testing"))
