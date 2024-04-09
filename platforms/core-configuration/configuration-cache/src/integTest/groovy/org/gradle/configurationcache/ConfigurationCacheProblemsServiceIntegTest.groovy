@@ -16,7 +16,12 @@
 
 package org.gradle.configurationcache
 
+import org.gradle.api.problems.Severity
+
 class ConfigurationCacheProblemsServiceIntegTest extends AbstractConfigurationCacheIntegrationTest {
+
+    public static final String REGISTRATION_UNSUPPORTED = 'validation:configuration-cache-registration-of-listener-on-gradle-buildfinished-is-unsupported'
+
     @Override
     def setup() {
         enableProblemsApiCheck()
@@ -24,7 +29,7 @@ class ConfigurationCacheProblemsServiceIntegTest extends AbstractConfigurationCa
 
     def "problems are reported through the Problems API"() {
         given:
-        buildFile << """
+        buildFile """
             gradle.buildFinished { }
 
             task run
@@ -34,32 +39,33 @@ class ConfigurationCacheProblemsServiceIntegTest extends AbstractConfigurationCa
         configurationCacheFails 'run'
 
         then:
-        collectedProblems.size() == 1
-        with(collectedProblems.get(0)) {
-            label == "registration of listener on 'Gradle.buildFinished' is unsupported"
-            with(where) {
-                path == "build file 'build.gradle'"
-                line == 2
-            }
-            documentationLink != null
-            severity == "ERROR"
+        verifyAll(receivedProblem(0)) {
+            fqid == REGISTRATION_UNSUPPORTED
+            contextualLabel == "registration of listener on 'Gradle.buildFinished' is unsupported"
+            definition.severity == Severity.ERROR
+            definition.documentationLink != null
+            locations.size() == 2
+            locations[0].path == "build file 'build.gradle'"
+            locations[0].line == 2
+            locations[1].path == "build file '${buildFile.absolutePath}'"
+            locations[1].line == 2
         }
 
         when:
         configurationCacheRunLenient 'run'
 
         then:
-        collectedProblems.size() == 1
-        with(collectedProblems.get(0)) {
-            label == "registration of listener on 'Gradle.buildFinished' is unsupported"
-            severity == "WARNING"
-            documentationLink != null
+        verifyAll(receivedProblem(0)) {
+            fqid == REGISTRATION_UNSUPPORTED
+            contextualLabel == "registration of listener on 'Gradle.buildFinished' is unsupported"
+            definition.severity == Severity.WARNING
+            definition.documentationLink != null
         }
     }
 
     def "max problems are still reported as warnings"() {
         given:
-        buildFile << """
+        buildFile """
             gradle.buildFinished { }
 
             task run
@@ -69,16 +75,16 @@ class ConfigurationCacheProblemsServiceIntegTest extends AbstractConfigurationCa
         configurationCacheFails WARN_PROBLEMS_CLI_OPT, "-D$MAX_PROBLEMS_GRADLE_PROP=0", 'run'
 
         then:
-        collectedProblems.size() == 1
-        with(collectedProblems.get(0)) {
-            label == "registration of listener on 'Gradle.buildFinished' is unsupported"
-            severity == "WARNING"
+        verifyAll(receivedProblem(0)) {
+            fqid == REGISTRATION_UNSUPPORTED
+            contextualLabel == "registration of listener on 'Gradle.buildFinished' is unsupported"
+            definition.severity == Severity.WARNING
         }
     }
 
     def "notCompatibleWithConfigurationCache task problems are reported as Advice"() {
         given:
-        buildFile << """
+        buildFile """
             task run {
                 notCompatibleWithConfigurationCache("because")
                 doLast {
@@ -91,10 +97,10 @@ class ConfigurationCacheProblemsServiceIntegTest extends AbstractConfigurationCa
         configurationCacheRun("run")
 
         then:
-        collectedProblems.size() == 1
-        with(collectedProblems.get(0)) {
-            label == "invocation of 'Task.project' at execution time is unsupported."
-            severity == "ADVICE"
+        verifyAll(receivedProblem(0)) {
+            fqid == 'validation:configuration-cache-invocation-of-task-project-at-execution-time-is-unsupported'
+            contextualLabel == "invocation of 'Task.project' at execution time is unsupported."
+            definition.severity == Severity.ADVICE
         }
     }
 }
