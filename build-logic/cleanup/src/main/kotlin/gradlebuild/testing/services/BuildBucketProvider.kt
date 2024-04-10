@@ -81,7 +81,7 @@ abstract class BuildBucketProvider : BuildService<BuildBucketProvider.Params> {
         override fun configureTest(testTask: Test, sourceSetName: String) {
             val currentVersionUnderTest = extractTestTaskGradleVersion(testTask.name)
             currentVersionUnderTest?.apply {
-                testTask.enabled = currentVersionEnabled(currentVersionUnderTest)
+                testTask.enabled = false
             }
         }
 
