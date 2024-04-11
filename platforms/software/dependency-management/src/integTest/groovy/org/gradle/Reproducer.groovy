@@ -20,30 +20,24 @@ import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 
 class Reproducer extends AbstractIntegrationSpec {
     def "test"() {
-        def tools = mavenRepo.module("com.github.java-json-tools", "json-patch", "1.13")
+        def patch = mavenRepo.module("org", "transitive")
+            .publish()
 
-        mavenRepo.module("org.jboss.resteasy", "resteasy-jackson2-provider", "6.2.4.Final")
-            .parent("org.jboss.resteasy", "providers-pom", "6.2.4.Final")
-            .dependsOn(exclusions: [[group: "com.google.code.findbugs", module: "jsr305"]], tools)
+        mavenRepo.module("org", "direct")
+            .dependsOn(patch)
             .publish()
 
         buildFile << """
             plugins {
-                id("java")
-                id("io.spring.dependency-management") version '1.1.4'
+                id("java-library")
             }
 
-            configurations.all { conf ->
-                conf.incoming.beforeResolve {
-                    println("Resolving: " + name + " " + conf.excludeRules )
-                    allDependencies.each {
-                        println(it.toString() + " Excludes " + it.excludeRules.collect { it.group + ":" + it.module })
-                    }
-                }
+            configurations.testRuntimeClasspath.incoming.beforeResolve {
+                dependencies.find { it instanceof ExternalModuleDependency && it.name.contains("direct") }
+                            .exclude(group: "org", module: "transitive")
             }
 
             ${mavenTestRepository()}
-            ${mavenCentralRepository()}
 
             dependencyLocking {
                 lockAllConfigurations()
@@ -51,35 +45,23 @@ class Reproducer extends AbstractIntegrationSpec {
 
             dependencies {
                 testImplementation(project)
-                implementation 'org.jboss.resteasy:resteasy-jackson2-provider:6.2.4.Final'
+                implementation 'org:direct:1.0'
             }
 
             task resolve {
+                dependsOn(configurations.testRuntimeClasspath)
                 def files = configurations.testRuntimeClasspath
                 doLast {
-                    files.incoming.files.each { println it.name }
+                    println files*.name
                 }
             }
         """
-
-        file("src/main/java/Foo.java") << "class Foo {}"
-        file("src/test/java/Example.java") << "class Example {}"
 
         expect:
         executer.noDeprecationChecks()
         succeeds("dependencies", "--write-locks")
 
-        println(file("gradle.lockfile").text)
-
         executer.noDeprecationChecks()
         succeeds("resolve")
-
-        executer.noDeprecationChecks()
-        succeeds("test", "-xcompileJava")
-
-        // Why does spring depman not put excludes on the project dependency
-        // after compileJava has run?
-        executer.noDeprecationChecks()
-        succeeds("test")
     }
 }

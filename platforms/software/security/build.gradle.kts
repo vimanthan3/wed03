@@ -38,6 +38,8 @@ dependencies {
     testRuntimeOnly(project(":distributions-core")) {
         because("Tests instantiate DefaultClassLoaderRegistry which requires a 'gradle-plugins.properties' through DefaultPluginModuleRegistry")
     }
+
+    testImplementation("io.spring.dependency-management:io.spring.dependency-management.gradle.plugin:1.1.4")
 }
 
 packageCycles {
