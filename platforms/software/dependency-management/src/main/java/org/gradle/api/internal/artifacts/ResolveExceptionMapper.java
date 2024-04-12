@@ -31,12 +31,12 @@ import java.util.List;
 /**
  * Adds additional context to exceptions thrown during resolution.
  */
-public class ResolveExceptionContextualizer {
+public class ResolveExceptionMapper {
 
     private final DomainObjectContext domainObjectContext;
     private final DocumentationRegistry documentationRegistry;
 
-    public ResolveExceptionContextualizer(
+    public ResolveExceptionMapper(
         DomainObjectContext domainObjectContext,
         DocumentationRegistry documentationRegistry
     ) {
@@ -93,7 +93,7 @@ public class ResolveExceptionContextualizer {
 
         ImmutableList<String> resolutions = ImmutableList.of(
             "The project declares repositories, effectively ignoring the repositories you have declared in the settings.\n" +
-                "You can figure out how project repositories are declared by configuring your build to fail on project repositories.\n" +
+                "To determine how project repositories are declared, configure your build to fail on project repositories.\n" +
                 documentationRegistry.getDocumentationRecommendationFor("information", "declaring_repositories", "sub:fail_build_on_project_repositories")
         );
 

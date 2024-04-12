@@ -79,11 +79,11 @@ public interface ResolveContext extends DependencyMetaDataProvider {
      */
     void markAsObserved();
 
+    FailureContext getFailureContext();
+
     /**
      * Details about this resolve context to provide additional context during failure cases.
      */
-    FailureContext getFailureContext();
-
     interface FailureContext {
 
         /**
