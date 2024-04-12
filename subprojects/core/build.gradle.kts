@@ -77,7 +77,8 @@ errorprone {
 }
 
 dependencies {
-    api(project(":base-annotations"))
+    api(projects.concurrent)
+    api(projects.javaLanguageExtensions)
     api(project(":base-services"))
     api(project(":base-services-groovy"))
     api(project(":build-cache"))
@@ -123,6 +124,7 @@ dependencies {
     api(libs.jsr305)
     api(libs.nativePlatform)
 
+    implementation(project(":base-asm"))
     implementation(project(":input-tracking"))
     implementation(project(":model-groovy"))
 
