@@ -64,4 +64,40 @@ class Reproducer extends AbstractIntegrationSpec {
         executer.noDeprecationChecks()
         succeeds("resolve")
     }
+
+    def "test2"() {
+        mavenRepo.module("org", "direct")
+            .dependsOn(mavenRepo.module("org", "transitive").publish())
+            .publish()
+
+        buildFile << """
+            plugins {
+                id("java-library")
+            }
+
+            ${mavenTestRepository()}
+
+            configurations.testRuntimeClasspath.incoming.beforeResolve {
+                dependencies.find { it instanceof ExternalModuleDependency && it.name.contains("direct") }
+                            .exclude(group: "org", module: "transitive")
+            }
+
+            dependencies {
+                testImplementation(project)
+                implementation 'org:direct:1.0'
+            }
+
+            task resolve {
+                dependsOn(configurations.testRuntimeClasspath)
+                def files = configurations.testRuntimeClasspath
+                doLast {
+                    assert(!files*.name.contains("transitive-1.0.jar"))
+                }
+            }
+        """
+
+        expect:
+        executer.noDeprecationChecks()
+        succeeds("resolve")
+    }
 }

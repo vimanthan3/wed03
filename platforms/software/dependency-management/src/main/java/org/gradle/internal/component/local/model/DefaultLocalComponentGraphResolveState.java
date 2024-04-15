@@ -66,18 +66,14 @@ public class DefaultLocalComponentGraphResolveState extends AbstractComponentGra
     private final ConcurrentMap<String, DefaultLocalConfigurationGraphResolveState> configurations = new ConcurrentHashMap<>();
 
     // The variants to use for variant selection during graph resolution
-    private final Lazy<Optional<List<? extends VariantGraphResolveState>>> allVariantsForGraphResolution;
+    private final Object allVariantsLock = new Object();
+    private Optional<List<? extends VariantGraphResolveState>> allVariantsForGraphResolution;
 
     // The public view of all selectable variants of this component
     private final Lazy<List<ResolvedVariantResult>> selectableVariantResults;
 
     public DefaultLocalComponentGraphResolveState(long instanceId, LocalComponentMetadata metadata, AttributeDesugaring attributeDesugaring, ComponentIdGenerator idGenerator, boolean adHoc) {
         super(instanceId, metadata, metadata, attributeDesugaring);
-        this.allVariantsForGraphResolution = Lazy.locking().of(() -> metadata.getVariantsForGraphTraversal().map(variants ->
-            variants.stream()
-                .map(variant -> getConfiguration(variant.getName()).asVariant())
-                .collect(Collectors.toList())
-        ));
         this.idGenerator = idGenerator;
         this.adHoc = adHoc;
         this.selectableVariantResults = Lazy.locking().of(() -> metadata.getVariantsForGraphTraversal().orElse(Collections.emptyList()).stream()
@@ -98,6 +94,9 @@ public class DefaultLocalComponentGraphResolveState extends AbstractComponentGra
     public void reevaluate() {
         configurations.clear();
         getArtifactMetadata().reevaluate();
+        synchronized (allVariantsLock) {
+            allVariantsForGraphResolution = null;
+        }
     }
 
     @Override
@@ -132,7 +131,16 @@ public class DefaultLocalComponentGraphResolveState extends AbstractComponentGra
 
     @Override
     protected Optional<List<? extends VariantGraphResolveState>> getVariantsForGraphTraversal() {
-        return allVariantsForGraphResolution.get();
+        synchronized (allVariantsLock) {
+            if (allVariantsForGraphResolution == null) {
+                allVariantsForGraphResolution = getMetadata().getVariantsForGraphTraversal().map(variants ->
+                    variants.stream()
+                        .map(variant -> getConfiguration(variant.getName()).asVariant())
+                        .collect(Collectors.toList())
+                );
+            }
+            return allVariantsForGraphResolution;
+        }
     }
 
     @Nullable
