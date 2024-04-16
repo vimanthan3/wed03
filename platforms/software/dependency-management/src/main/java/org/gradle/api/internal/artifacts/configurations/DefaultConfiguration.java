@@ -65,16 +65,15 @@ import org.gradle.api.internal.artifacts.DefaultExcludeRule;
 import org.gradle.api.internal.artifacts.DefaultModuleIdentifier;
 import org.gradle.api.internal.artifacts.DefaultPublishArtifactSet;
 import org.gradle.api.internal.artifacts.ExcludeRuleNotationConverter;
-import org.gradle.api.internal.artifacts.Module;
 import org.gradle.api.internal.artifacts.ResolveExceptionContextualizer;
 import org.gradle.api.internal.artifacts.ResolverResults;
-import org.gradle.api.internal.artifacts.component.ComponentIdentifierFactory;
 import org.gradle.api.internal.artifacts.dependencies.DefaultDependencyConstraint;
 import org.gradle.api.internal.artifacts.dependencies.DefaultMutableVersionConstraint;
 import org.gradle.api.internal.artifacts.dependencies.DependencyConstraintInternal;
 import org.gradle.api.internal.artifacts.dsl.dependencies.DependencyLockingProvider;
 import org.gradle.api.internal.artifacts.dsl.dependencies.DependencyLockingState;
-import org.gradle.api.internal.artifacts.ivyservice.moduleconverter.RootComponentMetadataBuilder;
+import org.gradle.api.internal.artifacts.ivyservice.moduleconverter.RootComponentStateBuilder;
+import org.gradle.api.internal.artifacts.ivyservice.moduleconverter.RootComponentStateBuilderFactory;
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.artifact.ArtifactSelectionSpec;
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.graph.results.VisitedGraphResults;
 import org.gradle.api.internal.artifacts.result.DefaultResolutionResult;
@@ -117,6 +116,7 @@ import org.gradle.internal.operations.BuildOperationDescriptor;
 import org.gradle.internal.operations.BuildOperationRunner;
 import org.gradle.internal.operations.CallableBuildOperation;
 import org.gradle.internal.reflect.Instantiator;
+import org.gradle.internal.service.scopes.DetachedDependencyMetadataProvider;
 import org.gradle.internal.typeconversion.NotationParser;
 import org.gradle.internal.work.WorkerThreadRegistry;
 import org.gradle.operations.dependencies.configurations.ConfigurationIdentity;
@@ -155,8 +155,6 @@ import static org.gradle.util.internal.ConfigureUtil.configure;
 @SuppressWarnings("rawtypes")
 public abstract class DefaultConfiguration extends AbstractFileCollection implements ConfigurationInternal, MutationValidator, ResettableConfiguration {
     private final ConfigurationResolver resolver;
-    private final DependencyMetaDataProvider metaDataProvider;
-    private final ComponentIdentifierFactory componentIdentifierFactory;
     private final DependencyLockingProvider dependencyLockingProvider;
     private final DefaultDependencySet dependencies;
     private final DefaultDependencyConstraintSet dependencyConstraints;
@@ -185,7 +183,8 @@ public abstract class DefaultConfiguration extends AbstractFileCollection implem
 
     private final Set<MutationValidator> childMutationValidators = new HashSet<>();
     private final MutationValidator parentMutationValidator = DefaultConfiguration.this::validateParentMutation;
-    private final RootComponentMetadataBuilder rootComponentMetadataBuilder;
+    private final RootComponentStateBuilderFactory rootComponentStateBuilderFactory;
+    private final RootComponentStateBuilder rootComponentStateBuilder;
     private final ConfigurationsProvider configurationsProvider;
 
     private final Path identityPath;
@@ -248,8 +247,6 @@ public abstract class DefaultConfiguration extends AbstractFileCollection implem
         ConfigurationsProvider configurationsProvider,
         ConfigurationResolver resolver,
         ListenerBroadcast<DependencyResolutionListener> dependencyResolutionListeners,
-        DependencyMetaDataProvider metaDataProvider,
-        ComponentIdentifierFactory componentIdentifierFactory,
         DependencyLockingProvider dependencyLockingProvider,
         Factory<ResolutionStrategyInternal> resolutionStrategyFactory,
         FileCollectionFactory fileCollectionFactory,
@@ -258,7 +255,8 @@ public abstract class DefaultConfiguration extends AbstractFileCollection implem
         NotationParser<Object, ConfigurablePublishArtifact> artifactNotationParser,
         NotationParser<Object, Capability> capabilityNotationParser,
         ImmutableAttributesFactory attributesFactory,
-        RootComponentMetadataBuilder rootComponentMetadataBuilder,
+        RootComponentStateBuilderFactory rootComponentStateBuilderFactory,
+        RootComponentStateBuilder rootComponentStateBuilder,
         ResolveExceptionContextualizer exceptionMapper,
         UserCodeApplicationContext userCodeApplicationContext,
         ProjectStateRegistry projectStateRegistry,
@@ -281,8 +279,6 @@ public abstract class DefaultConfiguration extends AbstractFileCollection implem
         this.name = name;
         this.configurationsProvider = configurationsProvider;
         this.resolver = resolver;
-        this.metaDataProvider = metaDataProvider;
-        this.componentIdentifierFactory = componentIdentifierFactory;
         this.dependencyLockingProvider = dependencyLockingProvider;
         this.resolutionStrategyFactory = resolutionStrategyFactory;
         this.fileCollectionFactory = fileCollectionFactory;
@@ -315,7 +311,8 @@ public abstract class DefaultConfiguration extends AbstractFileCollection implem
         this.artifacts = new DefaultPublishArtifactSet(Describables.of(displayName, "artifacts"), ownArtifacts, fileCollectionFactory, taskDependencyFactory);
 
         this.outgoing = instantiator.newInstance(DefaultConfigurationPublications.class, displayName, artifacts, new AllArtifactsProvider(), configurationAttributes, instantiator, artifactNotationParser, capabilityNotationParser, fileCollectionFactory, attributesFactory, domainObjectCollectionFactory, taskDependencyFactory);
-        this.rootComponentMetadataBuilder = rootComponentMetadataBuilder;
+        this.rootComponentStateBuilderFactory = rootComponentStateBuilderFactory;
+        this.rootComponentStateBuilder = rootComponentStateBuilder;
         this.currentResolveState = domainObjectContext.getModel().newCalculatedValue(Optional.empty());
         this.defaultConfigurationFactory = defaultConfigurationFactory;
 
@@ -353,11 +350,6 @@ public abstract class DefaultConfiguration extends AbstractFileCollection implem
         } else {
             return State.UNRESOLVED;
         }
-    }
-
-    @Override
-    public Module getModule() {
-        return metaDataProvider.getModule();
     }
 
     @Override
@@ -1262,14 +1254,16 @@ public abstract class DefaultConfiguration extends AbstractFileCollection implem
     private DefaultConfiguration newConfiguration(ConfigurationRole role) {
         String newName = getNameWithCopySuffix();
         DetachedConfigurationsProvider configurationsProvider = new DetachedConfigurationsProvider();
-        RootComponentMetadataBuilder rootComponentMetadataBuilder = this.rootComponentMetadataBuilder.withConfigurationsProvider(configurationsProvider);
+
+        DependencyMetaDataProvider identity = new DetachedDependencyMetadataProvider(rootComponentStateBuilder.getIdentity(), newName);
+        RootComponentStateBuilder rootComponentStateBuilder = rootComponentStateBuilderFactory.create(configurationsProvider, identity);
 
         Factory<ResolutionStrategyInternal> childResolutionStrategy = resolutionStrategy != null ? Factories.constant(resolutionStrategy.copy()) : resolutionStrategyFactory;
         DefaultConfiguration copiedConfiguration = defaultConfigurationFactory.create(
             newName,
             configurationsProvider,
             childResolutionStrategy,
-            rootComponentMetadataBuilder,
+            rootComponentStateBuilder,
             role
         );
         configurationsProvider.setTheOnlyConfiguration(copiedConfiguration);
@@ -1305,9 +1299,9 @@ public abstract class DefaultConfiguration extends AbstractFileCollection implem
     }
 
     @Override
-    public RootComponentMetadataBuilder.RootComponentState toRootComponent() {
+    public RootComponentStateBuilder.RootComponentState toRootComponent() {
         warnOnInvalidInternalAPIUsage("toRootComponent()", ProperMethodUsage.RESOLVABLE);
-        return rootComponentMetadataBuilder.toRootComponent(getName());
+        return rootComponentStateBuilder.toRootComponent(getName());
     }
 
     @Override
@@ -1322,8 +1316,6 @@ public abstract class DefaultConfiguration extends AbstractFileCollection implem
     }
 
     private List<? extends DependencyMetadata> generateSyntheticDependencies() {
-        ComponentIdentifier componentIdentifier = componentIdentifierFactory.createComponentIdentifier(getModule());
-
         Stream<LocalComponentDependencyMetadata> dependencyLockingConstraintMetadata = Stream.empty();
         if (getResolutionStrategy().isDependencyLockingEnabled()) {
             DependencyLockingState dependencyLockingState = dependencyLockingProvider.loadLockState(getDependencyLockingId(), displayName);

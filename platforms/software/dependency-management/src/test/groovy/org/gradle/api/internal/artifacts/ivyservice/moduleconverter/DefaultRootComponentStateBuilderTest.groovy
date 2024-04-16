@@ -33,7 +33,7 @@ import org.gradle.internal.component.model.ComponentIdGenerator
 import org.gradle.util.TestUtil
 import spock.lang.Specification
 
-class DefaultRootComponentMetadataBuilderTest extends Specification {
+class DefaultRootComponentStateBuilderTest extends Specification {
 
     DependencyMetaDataProvider metaDataProvider = Mock() {
         getModule() >> Mock(Module)
@@ -49,8 +49,7 @@ class DefaultRootComponentMetadataBuilderTest extends Specification {
 
     def mid = DefaultModuleIdentifier.newId('foo', 'bar')
 
-    def builderFactory = new DefaultRootComponentMetadataBuilder.Factory(
-        metaDataProvider,
+    def builderFactory = new RootComponentStateBuilderFactory(
         componentIdentifierFactory,
         moduleIdentifierFactory,
         configurationMetadataBuilder,
@@ -59,7 +58,7 @@ class DefaultRootComponentMetadataBuilderTest extends Specification {
         TestUtil.calculatedValueContainerFactory()
     )
 
-    def builder = builderFactory.create(configurationsProvider)
+    def builder = builderFactory.create(configurationsProvider, metaDataProvider)
 
     def "caches root component resolve state and metadata"() {
         componentIdentifierFactory.createComponentIdentifier(_) >> {

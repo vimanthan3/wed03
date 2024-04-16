@@ -22,11 +22,11 @@ import org.gradle.api.capabilities.Capability;
 import org.gradle.api.internal.DomainObjectContext;
 import org.gradle.api.internal.artifacts.ConfigurationResolver;
 import org.gradle.api.internal.artifacts.ResolveExceptionContextualizer;
-import org.gradle.api.internal.artifacts.component.ComponentIdentifierFactory;
 import org.gradle.api.internal.artifacts.dsl.CapabilityNotationParserFactory;
 import org.gradle.api.internal.artifacts.dsl.PublishArtifactNotationParserFactory;
 import org.gradle.api.internal.artifacts.dsl.dependencies.DependencyLockingProvider;
-import org.gradle.api.internal.artifacts.ivyservice.moduleconverter.RootComponentMetadataBuilder;
+import org.gradle.api.internal.artifacts.ivyservice.moduleconverter.RootComponentStateBuilder;
+import org.gradle.api.internal.artifacts.ivyservice.moduleconverter.RootComponentStateBuilderFactory;
 import org.gradle.api.internal.attributes.ImmutableAttributesFactory;
 import org.gradle.api.internal.collections.DomainObjectCollectionFactory;
 import org.gradle.api.internal.file.FileCollectionFactory;
@@ -54,8 +54,6 @@ public class DefaultConfigurationFactory {
     private final Instantiator instantiator;
     private final ConfigurationResolver resolver;
     private final ListenerManager listenerManager;
-    private final DependencyMetaDataProvider metaDataProvider;
-    private final ComponentIdentifierFactory componentIdentifierFactory;
     private final DependencyLockingProvider dependencyLockingProvider;
     private final DomainObjectContext domainObjectContext;
     private final FileCollectionFactory fileCollectionFactory;
@@ -63,6 +61,7 @@ public class DefaultConfigurationFactory {
     private final NotationParser<Object, ConfigurablePublishArtifact> artifactNotationParser;
     private final NotationParser<Object, Capability> capabilityNotationParser;
     private final ImmutableAttributesFactory attributesFactory;
+    private final RootComponentStateBuilderFactory rootComponentStateBuilderFactory;
     private final ResolveExceptionContextualizer exceptionContextualizer;
     private final UserCodeApplicationContext userCodeApplicationContext;
     private final ProjectStateRegistry projectStateRegistry;
@@ -76,14 +75,13 @@ public class DefaultConfigurationFactory {
         Instantiator instantiator,
         ConfigurationResolver resolver,
         ListenerManager listenerManager,
-        DependencyMetaDataProvider metaDataProvider,
-        ComponentIdentifierFactory componentIdentifierFactory,
         DependencyLockingProvider dependencyLockingProvider,
         DomainObjectContext domainObjectContext,
         FileCollectionFactory fileCollectionFactory,
         BuildOperationRunner buildOperationRunner,
         PublishArtifactNotationParserFactory artifactNotationParserFactory,
         ImmutableAttributesFactory attributesFactory,
+        RootComponentStateBuilderFactory rootComponentStateBuilderFactory,
         ResolveExceptionContextualizer exceptionContextualizer,
         UserCodeApplicationContext userCodeApplicationContext,
         ProjectStateRegistry projectStateRegistry,
@@ -95,8 +93,6 @@ public class DefaultConfigurationFactory {
         this.instantiator = instantiator;
         this.resolver = resolver;
         this.listenerManager = listenerManager;
-        this.metaDataProvider = metaDataProvider;
-        this.componentIdentifierFactory = componentIdentifierFactory;
         this.dependencyLockingProvider = dependencyLockingProvider;
         this.domainObjectContext = domainObjectContext;
         this.fileCollectionFactory = fileCollectionFactory;
@@ -104,6 +100,7 @@ public class DefaultConfigurationFactory {
         this.artifactNotationParser = artifactNotationParserFactory.create();
         this.capabilityNotationParser = new CapabilityNotationParserFactory(true).create();
         this.attributesFactory = attributesFactory;
+        this.rootComponentStateBuilderFactory = rootComponentStateBuilderFactory;
         this.exceptionContextualizer = exceptionContextualizer;
         this.userCodeApplicationContext = userCodeApplicationContext;
         this.projectStateRegistry = projectStateRegistry;
@@ -120,40 +117,39 @@ public class DefaultConfigurationFactory {
         String name,
         ConfigurationsProvider configurationsProvider,
         Factory<ResolutionStrategyInternal> resolutionStrategyFactory,
-        RootComponentMetadataBuilder rootComponentMetadataBuilder,
+        RootComponentStateBuilder rootComponentStateBuilder,
         ConfigurationRole role
     ) {
         ListenerBroadcast<DependencyResolutionListener> dependencyResolutionListeners =
             listenerManager.createAnonymousBroadcaster(DependencyResolutionListener.class);
         DefaultUnlockedConfiguration instance = instantiator.newInstance(
-                DefaultUnlockedConfiguration.class,
-                domainObjectContext,
-                name,
-                configurationsProvider,
-                resolver,
-                dependencyResolutionListeners,
-                metaDataProvider,
-                componentIdentifierFactory,
-                dependencyLockingProvider,
-                resolutionStrategyFactory,
-                fileCollectionFactory,
+            DefaultUnlockedConfiguration.class,
+            domainObjectContext,
+            name,
+            configurationsProvider,
+            resolver,
+            dependencyResolutionListeners,
+            dependencyLockingProvider,
+            resolutionStrategyFactory,
+            fileCollectionFactory,
             buildOperationRunner,
-                instantiator,
-                artifactNotationParser,
-                capabilityNotationParser,
-                attributesFactory,
-                rootComponentMetadataBuilder,
-                exceptionContextualizer,
-                userCodeApplicationContext,
-                projectStateRegistry,
-                workerThreadRegistry,
-                domainObjectCollectionFactory,
-                calculatedValueContainerFactory,
-                this,
-                taskDependencyFactory,
-                role
+            instantiator,
+            artifactNotationParser,
+            capabilityNotationParser,
+            attributesFactory,
+            rootComponentStateBuilderFactory,
+            rootComponentStateBuilder,
+            exceptionContextualizer,
+            userCodeApplicationContext,
+            projectStateRegistry,
+            workerThreadRegistry,
+            domainObjectCollectionFactory,
+            calculatedValueContainerFactory,
+            this,
+            taskDependencyFactory,
+            role
         );
-        instance.addMutationValidator(rootComponentMetadataBuilder.getValidator());
+        instance.addMutationValidator(rootComponentStateBuilder.getValidator());
         return instance;
     }
 
@@ -164,7 +160,7 @@ public class DefaultConfigurationFactory {
         String name,
         ConfigurationsProvider configurationsProvider,
         Factory<ResolutionStrategyInternal> resolutionStrategyFactory,
-        RootComponentMetadataBuilder rootComponentMetadataBuilder
+        RootComponentStateBuilder rootComponentStateBuilder
     ) {
         ListenerBroadcast<DependencyResolutionListener> dependencyResolutionListeners =
             listenerManager.createAnonymousBroadcaster(DependencyResolutionListener.class);
@@ -175,8 +171,6 @@ public class DefaultConfigurationFactory {
             configurationsProvider,
             resolver,
             dependencyResolutionListeners,
-            metaDataProvider,
-            componentIdentifierFactory,
             dependencyLockingProvider,
             resolutionStrategyFactory,
             fileCollectionFactory,
@@ -185,7 +179,8 @@ public class DefaultConfigurationFactory {
             artifactNotationParser,
             capabilityNotationParser,
             attributesFactory,
-            rootComponentMetadataBuilder,
+            rootComponentStateBuilderFactory,
+            rootComponentStateBuilder,
             exceptionContextualizer,
             userCodeApplicationContext,
             projectStateRegistry,
@@ -195,7 +190,7 @@ public class DefaultConfigurationFactory {
             this,
             taskDependencyFactory
         );
-        instance.addMutationValidator(rootComponentMetadataBuilder.getValidator());
+        instance.addMutationValidator(rootComponentStateBuilder.getValidator());
         return instance;
     }
 
@@ -206,7 +201,7 @@ public class DefaultConfigurationFactory {
         String name,
         ConfigurationsProvider configurationsProvider,
         Factory<ResolutionStrategyInternal> resolutionStrategyFactory,
-        RootComponentMetadataBuilder rootComponentMetadataBuilder
+        RootComponentStateBuilder rootComponentStateBuilder
     ) {
         ListenerBroadcast<DependencyResolutionListener> dependencyResolutionListeners =
             listenerManager.createAnonymousBroadcaster(DependencyResolutionListener.class);
@@ -217,8 +212,6 @@ public class DefaultConfigurationFactory {
             configurationsProvider,
             resolver,
             dependencyResolutionListeners,
-            metaDataProvider,
-            componentIdentifierFactory,
             dependencyLockingProvider,
             resolutionStrategyFactory,
             fileCollectionFactory,
@@ -227,7 +220,8 @@ public class DefaultConfigurationFactory {
             artifactNotationParser,
             capabilityNotationParser,
             attributesFactory,
-            rootComponentMetadataBuilder,
+            rootComponentStateBuilderFactory,
+            rootComponentStateBuilder,
             exceptionContextualizer,
             userCodeApplicationContext,
             projectStateRegistry,
@@ -237,7 +231,7 @@ public class DefaultConfigurationFactory {
             this,
             taskDependencyFactory
         );
-        instance.addMutationValidator(rootComponentMetadataBuilder.getValidator());
+        instance.addMutationValidator(rootComponentStateBuilder.getValidator());
         return instance;
     }
 
@@ -248,7 +242,7 @@ public class DefaultConfigurationFactory {
         String name,
         ConfigurationsProvider configurationsProvider,
         Factory<ResolutionStrategyInternal> resolutionStrategyFactory,
-        RootComponentMetadataBuilder rootComponentMetadataBuilder
+        RootComponentStateBuilder rootComponentStateBuilder
     ) {
         ListenerBroadcast<DependencyResolutionListener> dependencyResolutionListeners =
             listenerManager.createAnonymousBroadcaster(DependencyResolutionListener.class);
@@ -259,8 +253,6 @@ public class DefaultConfigurationFactory {
             configurationsProvider,
             resolver,
             dependencyResolutionListeners,
-            metaDataProvider,
-            componentIdentifierFactory,
             dependencyLockingProvider,
             resolutionStrategyFactory,
             fileCollectionFactory,
@@ -269,7 +261,8 @@ public class DefaultConfigurationFactory {
             artifactNotationParser,
             capabilityNotationParser,
             attributesFactory,
-            rootComponentMetadataBuilder,
+            rootComponentStateBuilderFactory,
+            rootComponentStateBuilder,
             exceptionContextualizer,
             userCodeApplicationContext,
             projectStateRegistry,
@@ -279,7 +272,7 @@ public class DefaultConfigurationFactory {
             this,
             taskDependencyFactory
         );
-        instance.addMutationValidator(rootComponentMetadataBuilder.getValidator());
+        instance.addMutationValidator(rootComponentStateBuilder.getValidator());
         return instance;
     }
 }
