@@ -377,12 +377,6 @@ class BuildInitInteractiveIntegrationTest extends AbstractInitIntegrationSpec {
 
         // Select 'yes'
         ConcurrentTestUtil.poll(60) {
-            assertPromptedToOverwriteExistingFiles(handle)
-        }
-        handle.stdinPipe.write(("yes" + TextUtil.platformLineSeparator).bytes)
-
-        // Select 'yes'
-        ConcurrentTestUtil.poll(60) {
             assert handle.standardOutput.contains(convertMavenBuildPrompt)
         }
         handle.stdinPipe.write(TextUtil.platformLineSeparator.bytes)
@@ -419,12 +413,6 @@ class BuildInitInteractiveIntegrationTest extends AbstractInitIntegrationSpec {
 
         when:
         def handle = startInteractiveExecutorWithTasks("init")
-
-        // Select 'yes'
-        ConcurrentTestUtil.poll(60) {
-            assertPromptedToOverwriteExistingFiles(handle)
-        }
-        handle.stdinPipe.write(("yes" + TextUtil.platformLineSeparator).bytes)
 
         // Select 'no'
         ConcurrentTestUtil.poll(60) {
