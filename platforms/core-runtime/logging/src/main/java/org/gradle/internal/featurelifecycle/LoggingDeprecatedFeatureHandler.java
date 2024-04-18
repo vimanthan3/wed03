@@ -103,7 +103,7 @@ public class LoggingDeprecatedFeatureHandler implements FeatureHandler<Deprecate
                     .contextualLabel(usage.getSummary())
                     .details(usage.getRemovalDetails())
                     .documentedAt(usage.getDocumentationUrl())
-                    .additionalData("type", usage.getType().name())
+                    .additionalData("type", usage.getType().name()) // TODO we should use a custom type here
                     .severity(WARNING);
 
                 addPossibleLocation(diagnostics, problemSpec);

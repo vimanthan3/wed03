@@ -35,6 +35,7 @@ import org.gradle.internal.build.event.types.DefaultContextualLabel;
 import org.gradle.internal.build.event.types.DefaultDetails;
 import org.gradle.internal.build.event.types.DefaultDocumentationLink;
 import org.gradle.internal.build.event.types.DefaultFailure;
+import org.gradle.internal.build.event.types.DefaultInternalDeprecationAdditionalData;
 import org.gradle.internal.build.event.types.DefaultProblemDefinition;
 import org.gradle.internal.build.event.types.DefaultProblemDescriptor;
 import org.gradle.internal.build.event.types.DefaultProblemDetails;
@@ -43,6 +44,7 @@ import org.gradle.internal.build.event.types.DefaultProblemGroup;
 import org.gradle.internal.build.event.types.DefaultProblemId;
 import org.gradle.internal.build.event.types.DefaultSeverity;
 import org.gradle.internal.build.event.types.DefaultSolution;
+import org.gradle.internal.deprecation.DeprecatedFeatureUsage;
 import org.gradle.internal.operations.OperationIdentifier;
 import org.gradle.internal.operations.OperationProgressEvent;
 import org.gradle.tooling.internal.protocol.InternalFailure;
@@ -53,6 +55,7 @@ import org.gradle.tooling.internal.protocol.InternalProblemId;
 import org.gradle.tooling.internal.protocol.events.InternalProblemDescriptor;
 import org.gradle.tooling.internal.protocol.problem.InternalAdditionalData;
 import org.gradle.tooling.internal.protocol.problem.InternalContextualLabel;
+import org.gradle.tooling.internal.protocol.problem.InternalDeprecationAdditionalData;
 import org.gradle.tooling.internal.protocol.problem.InternalDetails;
 import org.gradle.tooling.internal.protocol.problem.InternalDocumentationLink;
 import org.gradle.tooling.internal.protocol.problem.InternalLocation;
@@ -200,9 +203,14 @@ public class ProblemsProgressEventConsumer extends ClientForwardingBuildOperatio
             .collect(toImmutableList());
     }
 
-    private static InternalAdditionalData toInternalAdditionalData(Map<String, Object> additionalData) {
+    @SuppressWarnings("unchecked")
+    private static InternalAdditionalData toInternalAdditionalData(Object additionalData) {
+        if (additionalData instanceof DeprecatedFeatureUsage.Type) {
+            return new DefaultInternalDeprecationAdditionalData(InternalDeprecationAdditionalData.DeprecationType.valueOf(((DeprecatedFeatureUsage.Type) additionalData).name()));
+        }
+        Map<String, Object> additionalDataMap = (Map<String, Object>) additionalData;
         return new DefaultAdditionalData(
-            additionalData.entrySet().stream()
+            additionalDataMap.entrySet().stream()
                 .filter(entry -> isSupportedType(entry.getValue()))
                 .collect(toMap(Map.Entry::getKey, Map.Entry::getValue))
         );

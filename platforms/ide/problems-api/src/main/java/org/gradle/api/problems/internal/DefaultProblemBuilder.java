@@ -38,7 +38,7 @@ public class DefaultProblemBuilder implements InternalProblemBuilder {
     private DocLink docLink;
     private List<String> solutions;
     private RuntimeException exception;
-    private final Map<String, Object> additionalData;
+    private final Map<String, Object> additionalData; // should be generic type
     private boolean collectLocation = false;
 
     public DefaultProblemBuilder(Problem problem) {
@@ -69,7 +69,7 @@ public class DefaultProblemBuilder implements InternalProblemBuilder {
         }
 
         // We need to explicitly manage serializing the data from the daemon to the tooling API client, hence the restriction.
-        for (Object value : additionalData.values()) {
+        for (Object value : additionalData.values()) { // TODO (donat) this can go away once we have a generic type for additionalData
             if (!(value instanceof String)) {
                 return invalidProblem("invalid-additional-data", "ProblemBuilder.additionalData() only supports values of type String");
             }
