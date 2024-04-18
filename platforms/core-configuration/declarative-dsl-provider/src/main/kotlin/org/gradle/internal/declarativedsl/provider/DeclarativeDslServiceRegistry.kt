@@ -20,13 +20,32 @@ import org.gradle.internal.declarativedsl.evaluator.DefaultDeclarativeKotlinScri
 import org.gradle.internal.declarativedsl.evaluator.DefaultInterpretationSchemaBuilder
 import org.gradle.internal.declarativedsl.evaluator.DeclarativeKotlinScriptEvaluator
 import org.gradle.internal.declarativedsl.evaluator.StoringInterpretationSchemaBuilder
+import org.gradle.internal.declarativedsl.model.annotations.RestrictedAnnotationHandler
+import org.gradle.internal.declarativedsl.model.annotations.RestrictedNestedAnnotationHandler
 import org.gradle.internal.service.ServiceRegistration
 import org.gradle.internal.service.scopes.AbstractPluginServiceRegistry
 
 
 class DeclarativeDslServiceRegistry : AbstractPluginServiceRegistry() {
+    override fun registerGlobalServices(registration: ServiceRegistration) {
+        registration.addProvider(GlobalServices)
+    }
+
     override fun registerBuildServices(registration: ServiceRegistration) {
         registration.addProvider(BuildServices)
+    }
+}
+
+
+internal
+object GlobalServices {
+    @Suppress("unused")
+    fun createRestrictedAnnotationHandler(): RestrictedAnnotationHandler {
+        return RestrictedAnnotationHandler()
+    }
+
+    fun createRestrictedNestedAnnotationHandler(): RestrictedNestedAnnotationHandler {
+        return RestrictedNestedAnnotationHandler()
     }
 }
 
