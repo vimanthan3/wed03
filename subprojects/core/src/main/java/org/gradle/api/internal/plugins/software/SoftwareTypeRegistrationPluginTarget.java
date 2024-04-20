@@ -24,15 +24,21 @@ import org.gradle.api.initialization.Settings;
 import org.gradle.api.internal.plugins.PluginTarget;
 import org.gradle.api.internal.tasks.properties.InspectionScheme;
 import org.gradle.api.plugins.ExtensionContainer;
+import org.gradle.api.problems.Severity;
+import org.gradle.api.problems.internal.GradleCoreProblemGroup;
 import org.gradle.configuration.ConfigurationTargetIdentifier;
-import org.gradle.internal.Cast;
+import org.gradle.internal.exceptions.DefaultMultiCauseException;
 import org.gradle.internal.properties.annotations.PropertyMetadata;
 import org.gradle.internal.properties.annotations.TypeMetadata;
 import org.gradle.internal.properties.annotations.TypeMetadataWalker;
+import org.gradle.internal.reflect.DefaultTypeValidationContext;
+import org.gradle.internal.reflect.validation.TypeValidationProblemRenderer;
 import org.gradle.plugin.software.internal.SoftwareTypeRegistry;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
+
+import static com.google.common.collect.ImmutableList.toImmutableList;
 
 /**
  * A {@link PluginTarget} that inspects the plugin for {@link RegistersSoftwareTypes} annotations and registers the
@@ -84,7 +90,7 @@ public class SoftwareTypeRegistrationPluginTarget implements PluginTarget {
         Optional<RegistersSoftwareTypes> registersSoftwareType = typeMetadata.getTypeAnnotationMetadata().getAnnotation(RegistersSoftwareTypes.class);
         registersSoftwareType.ifPresent(registration -> {
             for (Class<? extends Plugin<Project>> softwareTypeImplClass : registration.value()) {
-                validateSoftwareTypePluginExposesSoftwareTypes(softwareTypeImplClass);
+                validateSoftwareTypePlugin(softwareTypeImplClass, typeMetadata.getType());
                 softwareTypeRegistry.register(softwareTypeImplClass);
                 TypeToken<?> pluginType = TypeToken.of(softwareTypeImplClass);
                 TypeMetadataWalker.typeWalker(inspectionScheme.getMetadataStore(), SoftwareType.class)
@@ -93,18 +99,41 @@ public class SoftwareTypeRegistrationPluginTarget implements PluginTarget {
         });
     }
 
-    void validateSoftwareTypePluginExposesSoftwareTypes(Class<? extends Plugin<Project>> softwareTypePluginImplClass) {
+    private void validateSoftwareTypePlugin(Class<? extends Plugin<Project>> softwareTypePluginImplClass, Class<?> registeringPlugin) {
         TypeToken<?> softwareTypePluginImplType = TypeToken.of(softwareTypePluginImplClass);
         TypeMetadata softwareTypePluginImplMetadata = inspectionScheme.getMetadataStore().getTypeMetadata(softwareTypePluginImplType.getRawType());
+        DefaultTypeValidationContext typeValidationContext = DefaultTypeValidationContext.withRootType(softwareTypePluginImplClass, false);
+        softwareTypePluginImplMetadata.visitValidationFailures(null, typeValidationContext);
 
-        for (PropertyMetadata propertyMetadata : softwareTypePluginImplMetadata.getPropertiesMetadata()) {
-            Optional<SoftwareType> registersSoftwareType = propertyMetadata.getAnnotation(SoftwareType.class);
-            if (registersSoftwareType.isPresent()) {
-                return;
-            }
+        boolean doesNotHaveSoftwareTypeProperties = softwareTypePluginImplMetadata.getPropertiesMetadata().stream().noneMatch(propertyMetadata ->
+            propertyMetadata.getAnnotation(SoftwareType.class).isPresent()
+        );
+
+        if (doesNotHaveSoftwareTypeProperties) {
+            typeValidationContext.visitTypeProblem(problem ->
+                problem.withAnnotationType(softwareTypePluginImplClass)
+                    .id("missing-software-type", "Missing software type annotation", GradleCoreProblemGroup.validation().type())
+                    .contextualLabel("is registered as a software type plugin but does not expose any software types")
+                    .severity(Severity.ERROR)
+                    .details("This class was registered as a software type plugin, but it does not expose any software types. Software type plugins must expose software types via properties with the @SoftwareType annotation.")
+                    .solution("Add @SoftwareType annotations to properties of " + softwareTypePluginImplClass.getSimpleName())
+                    .solution("Remove " + softwareTypePluginImplClass.getSimpleName() + " from the @RegistersSoftwareTypes annotation on " + registeringPlugin.getSimpleName())
+            );
         }
 
-        throw new InvalidUserDataException("A plugin with type '" + softwareTypePluginImplClass.getName() + "' was registered as a software type plugin, but it does not expose any software types. Software type plugins must expose software types via properties with the @SoftwareType annotation.");
+        if (!typeValidationContext.getProblems().isEmpty()) {
+            throw new DefaultMultiCauseException(
+                String.format(typeValidationContext.getProblems().size() == 1
+                        ? "A problem was found with the %s plugin."
+                        : "Some problems were found with the %s plugin.",
+                    softwareTypePluginImplClass.getSimpleName()),
+                typeValidationContext.getProblems().stream()
+                    .map(TypeValidationProblemRenderer::renderMinimalInformationAbout)
+                    .sorted()
+                    .map(InvalidUserDataException::new)
+                    .collect(toImmutableList())
+            );
+        }
     }
 
     private static class SoftwareTypeConventionRegisteringVisitor implements TypeMetadataWalker.StaticMetadataVisitor {
@@ -121,7 +150,7 @@ public class SoftwareTypeRegistrationPluginTarget implements PluginTarget {
         @Override
         public void visitNested(TypeMetadata typeMetadata, String qualifiedName, PropertyMetadata propertyMetadata, TypeToken<?> value) {
             propertyMetadata.getAnnotation(SoftwareType.class).ifPresent(softwareType -> {
-                extensionContainer.create(softwareType.modelPublicType(), softwareType.name(), Cast.uncheckedCast(value.getRawType()));
+                extensionContainer.create(softwareType.name(), softwareType.modelPublicType());
             });
         }
     }

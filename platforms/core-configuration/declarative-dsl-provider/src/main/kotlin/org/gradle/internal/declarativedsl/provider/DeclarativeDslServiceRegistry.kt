@@ -21,7 +21,7 @@ import org.gradle.internal.declarativedsl.evaluator.DefaultInterpretationSchemaB
 import org.gradle.internal.declarativedsl.evaluator.DeclarativeKotlinScriptEvaluator
 import org.gradle.internal.declarativedsl.evaluator.StoringInterpretationSchemaBuilder
 import org.gradle.internal.declarativedsl.model.annotations.RestrictedAnnotationHandler
-import org.gradle.internal.declarativedsl.model.annotations.RestrictedNestedAnnotationHandler
+import org.gradle.internal.declarativedsl.model.annotations.NestedRestrictedAnnotationHandler
 import org.gradle.internal.service.ServiceRegistration
 import org.gradle.internal.service.scopes.AbstractPluginServiceRegistry
 
@@ -44,8 +44,8 @@ object GlobalServices {
         return RestrictedAnnotationHandler()
     }
 
-    fun createRestrictedNestedAnnotationHandler(): RestrictedNestedAnnotationHandler {
-        return RestrictedNestedAnnotationHandler()
+    fun createRestrictedNestedAnnotationHandler(): NestedRestrictedAnnotationHandler {
+        return NestedRestrictedAnnotationHandler()
     }
 }
 

@@ -247,9 +247,9 @@ class SoftwareTypeDeclarationIntegrationTest extends AbstractIntegrationSpec imp
         fails(":printTestSoftwareTypeExtensionConfiguration")
 
         then:
-        failure.assertHasCause("Failed to apply plugin class 'org.gradle.test.SoftwareTypeImplPlugin'.")
+        failure.assertHasCause("Failed to apply plugin 'com.example.test-software-type'.")
         failure.assertHasCause("A problem was found with the SoftwareTypeImplPlugin plugin.")
-        failure.assertThatCause(containsText("Type 'org.gradle.test.SoftwareTypeImplPlugin_Decorated' property 'testSoftwareTypeExtension' has @SoftwareType annotation with public type 'AnotherSoftwareTypeExtension' used on property of type 'TestSoftwareTypeExtension'."))
+        failure.assertThatCause(containsText("Type 'org.gradle.test.SoftwareTypeImplPlugin' property 'testSoftwareTypeExtension' has @SoftwareType annotation with public type 'AnotherSoftwareTypeExtension' used on property of type 'TestSoftwareTypeExtension'."))
     }
 
     def 'sensible error when a software type plugin is registered that does not expose a software type'() {
@@ -263,7 +263,8 @@ class SoftwareTypeDeclarationIntegrationTest extends AbstractIntegrationSpec imp
 
         then:
         failure.assertHasCause("Failed to apply plugin 'com.example.test-software-type'.")
-        failure.assertHasCause("A plugin with type 'org.gradle.test.SoftwareTypeImplPlugin' was registered as a software type plugin, but it does not expose any software types. Software type plugins must expose software types via properties with the @SoftwareType annotation.")
+        failure.assertHasCause("A problem was found with the SoftwareTypeImplPlugin plugin.")
+        failure.assertHasCause("Type 'org.gradle.test.SoftwareTypeImplPlugin' is registered as a software type plugin but does not expose any software types.")
     }
 
     def 'sensible error when a software type plugin exposes a private software type'() {
