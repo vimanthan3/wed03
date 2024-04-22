@@ -20,9 +20,13 @@ import org.gradle.api.NonNullApi;
 import org.gradle.api.problems.ProblemGroup;
 import org.gradle.api.problems.ProblemId;
 import org.gradle.api.problems.Severity;
+import org.gradle.api.problems.internal.AdditionalData;
+import org.gradle.api.problems.internal.AdditionalDataSpec;
 import org.gradle.api.problems.internal.DefaultProblemProgressDetails;
+import org.gradle.api.problems.internal.DeprecationData;
 import org.gradle.api.problems.internal.DocLink;
 import org.gradle.api.problems.internal.FileLocation;
+import org.gradle.api.problems.internal.GenericData;
 import org.gradle.api.problems.internal.LineInFileLocation;
 import org.gradle.api.problems.internal.OffsetInFileLocation;
 import org.gradle.api.problems.internal.PluginIdLocation;
@@ -30,12 +34,13 @@ import org.gradle.api.problems.internal.Problem;
 import org.gradle.api.problems.internal.ProblemDefinition;
 import org.gradle.api.problems.internal.ProblemLocation;
 import org.gradle.api.problems.internal.TaskPathLocation;
+import org.gradle.api.problems.internal.TypeValidationData;
 import org.gradle.internal.build.event.types.DefaultAdditionalData;
 import org.gradle.internal.build.event.types.DefaultContextualLabel;
+import org.gradle.internal.build.event.types.DefaultDeprecationData;
 import org.gradle.internal.build.event.types.DefaultDetails;
 import org.gradle.internal.build.event.types.DefaultDocumentationLink;
 import org.gradle.internal.build.event.types.DefaultFailure;
-import org.gradle.internal.build.event.types.DefaultInternalDeprecationAdditionalData;
 import org.gradle.internal.build.event.types.DefaultProblemDefinition;
 import org.gradle.internal.build.event.types.DefaultProblemDescriptor;
 import org.gradle.internal.build.event.types.DefaultProblemDetails;
@@ -44,7 +49,7 @@ import org.gradle.internal.build.event.types.DefaultProblemGroup;
 import org.gradle.internal.build.event.types.DefaultProblemId;
 import org.gradle.internal.build.event.types.DefaultSeverity;
 import org.gradle.internal.build.event.types.DefaultSolution;
-import org.gradle.internal.deprecation.DeprecatedFeatureUsage;
+import org.gradle.internal.build.event.types.DefaultTypeValidationData;
 import org.gradle.internal.operations.OperationIdentifier;
 import org.gradle.internal.operations.OperationProgressEvent;
 import org.gradle.tooling.internal.protocol.InternalFailure;
@@ -55,7 +60,7 @@ import org.gradle.tooling.internal.protocol.InternalProblemId;
 import org.gradle.tooling.internal.protocol.events.InternalProblemDescriptor;
 import org.gradle.tooling.internal.protocol.problem.InternalAdditionalData;
 import org.gradle.tooling.internal.protocol.problem.InternalContextualLabel;
-import org.gradle.tooling.internal.protocol.problem.InternalDeprecationAdditionalData;
+import org.gradle.tooling.internal.protocol.problem.InternalDeprecationData;
 import org.gradle.tooling.internal.protocol.problem.InternalDetails;
 import org.gradle.tooling.internal.protocol.problem.InternalDocumentationLink;
 import org.gradle.tooling.internal.protocol.problem.InternalLocation;
@@ -63,6 +68,7 @@ import org.gradle.tooling.internal.protocol.problem.InternalSeverity;
 import org.gradle.tooling.internal.protocol.problem.InternalSolution;
 
 import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -204,16 +210,29 @@ public class ProblemsProgressEventConsumer extends ClientForwardingBuildOperatio
     }
 
     @SuppressWarnings("unchecked")
-    private static InternalAdditionalData toInternalAdditionalData(Object additionalData) {
-        if (additionalData instanceof DeprecatedFeatureUsage.Type) {
-            return new DefaultInternalDeprecationAdditionalData(InternalDeprecationAdditionalData.DeprecationType.valueOf(((DeprecatedFeatureUsage.Type) additionalData).name()));
+    private static InternalAdditionalData toInternalAdditionalData(@Nullable AdditionalData<? extends AdditionalDataSpec> additionalData) {
+        if (additionalData instanceof DeprecationData) {
+            DeprecationData data = (DeprecationData) additionalData;
+            return new DefaultDeprecationData(InternalDeprecationData.DeprecationType.valueOf(data.getType().name()));
+        } else if (additionalData instanceof TypeValidationData) {
+            TypeValidationData data = (TypeValidationData) additionalData;
+            return new DefaultTypeValidationData(
+                data.getPluginId(),
+                data.isIrrelevantInErrorMessage(),
+                data.getPropertyName(),
+                data.getParentPropertyName(),
+                data.getTypeName()
+            );
+        } else if (additionalData instanceof GenericData) {
+            GenericData data = (GenericData) additionalData;
+            return new DefaultAdditionalData(
+                data.getAsMap().entrySet().stream()
+                    .filter(entry -> isSupportedType(entry.getValue()))
+                    .collect(toMap(Map.Entry::getKey, Map.Entry::getValue))
+            );
+        } else {
+            return new DefaultAdditionalData(Collections.emptyMap());
         }
-        Map<String, Object> additionalDataMap = (Map<String, Object>) additionalData;
-        return new DefaultAdditionalData(
-            additionalDataMap.entrySet().stream()
-                .filter(entry -> isSupportedType(entry.getValue()))
-                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue))
-        );
     }
 
     private static boolean isSupportedType(Object type) {

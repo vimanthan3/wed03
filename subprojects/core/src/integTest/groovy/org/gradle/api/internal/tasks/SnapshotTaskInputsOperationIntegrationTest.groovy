@@ -185,7 +185,7 @@ class SnapshotTaskInputsOperationIntegrationTest extends AbstractIntegrationSpec
             contextualLabel == 'Additional action of task \':customTask\' was loaded with an unknown classloader (class \'CustomTask_Decorated\').'
             details == 'Gradle cannot track the implementation for classes loaded with an unknown classloader.'
             solutions == [ 'Load your class by using one of Gradle\'s built-in ways.' ]
-            additionalData == [
+            additionalData.asMap == [
                 'typeName' : 'CustomTask',
                 'typeIsIrrelevantInErrorMessage' : 'true',
             ]
@@ -195,7 +195,7 @@ class SnapshotTaskInputsOperationIntegrationTest extends AbstractIntegrationSpec
             contextualLabel == 'Implementation of task \':customTask\' was loaded with an unknown classloader (class \'CustomTask_Decorated\').'
             details == 'Gradle cannot track the implementation for classes loaded with an unknown classloader.'
             solutions == [ 'Load your class by using one of Gradle\'s built-in ways.' ]
-            additionalData == [
+            additionalData.asMap == [
                 'typeName' : 'CustomTask',
                 'typeIsIrrelevantInErrorMessage' : 'true',
             ]
@@ -239,7 +239,7 @@ class SnapshotTaskInputsOperationIntegrationTest extends AbstractIntegrationSpec
             contextualLabel == 'Additional action of task \':customTask\' was loaded with an unknown classloader (class \'A\').'
             details == 'Gradle cannot track the implementation for classes loaded with an unknown classloader.'
             solutions == [ 'Load your class by using one of Gradle\'s built-in ways.' ]
-            additionalData == [
+            additionalData.asMap == [
                 'typeName' : 'CustomTask',
                 'typeIsIrrelevantInErrorMessage' : 'true',
             ]
@@ -554,7 +554,7 @@ class SnapshotTaskInputsOperationIntegrationTest extends AbstractIntegrationSpec
             contextualLabel == "Property 'bean' was loaded with an unknown classloader (class 'A')."
             details == 'Gradle cannot track the implementation for classes loaded with an unknown classloader.'
             solutions == [ 'Load your class by using one of Gradle\'s built-in ways.' ]
-            additionalData == [
+            additionalData.asMap == [
                 'typeName' : 'CustomTask',
                 'propertyName' : 'bean',
                 'typeIsIrrelevantInErrorMessage' : 'true',

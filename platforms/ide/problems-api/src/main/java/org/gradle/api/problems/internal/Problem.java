@@ -18,7 +18,6 @@ package org.gradle.api.problems.internal;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Interface for describing structured information about a problem.
@@ -63,7 +62,8 @@ public interface Problem {
      * <p>
      * The only supported value type is {@link String}.
      */
-    Map<String, Object> getAdditionalData();
+    @Nullable
+    AdditionalData<? extends AdditionalDataSpec> getAdditionalData();
 
     /**
      * Returns a problem builder with fields initialized with values from this instance.

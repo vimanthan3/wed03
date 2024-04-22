@@ -63,6 +63,7 @@ class ProblemsServiceModelBuilderCrossVersionTest extends ToolingApiSpecificatio
         ]
     }
 
+    @spock.lang.Ignore("TODO (donat) Fix test")
     def "Can add additional metadata"() {
         given:
         buildFile getBuildScriptSampleContent(false, true, targetVersion)

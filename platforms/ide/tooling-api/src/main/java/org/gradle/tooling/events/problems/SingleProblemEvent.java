@@ -77,4 +77,13 @@ public interface SingleProblemEvent extends ProblemEvent {
      */
     @Nullable
     FailureContainer getFailure();
+
+    /**
+     * Returns the additional data associated with this problem.
+     * TODO donat add documentation on the expected result.
+     *
+     * @return the additional data
+     * @since 8.9
+     */
+    AdditionalData getAdditionalData();
 }

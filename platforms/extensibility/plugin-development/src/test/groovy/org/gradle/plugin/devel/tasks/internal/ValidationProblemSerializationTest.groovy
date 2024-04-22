@@ -17,9 +17,12 @@
 package org.gradle.plugin.devel.tasks.internal
 
 import com.google.gson.Gson
+import org.gradle.api.Action
 import org.gradle.api.problems.Severity
 import org.gradle.api.problems.internal.DefaultProblemReporter
 import org.gradle.api.problems.internal.DocLink
+import org.gradle.api.problems.internal.GenericData
+import org.gradle.api.problems.internal.GenericDataSpec
 import org.gradle.api.problems.internal.GradleCoreProblemGroup
 import org.gradle.api.problems.internal.InternalProblemReporter
 import org.gradle.api.problems.internal.ProblemEmitter
@@ -183,8 +186,13 @@ class ValidationProblemSerializationTest extends Specification {
         given:
         def problem = problemReporter.create {
             it.id("id", "label", GradleCoreProblemGroup.validation())
-                .additionalData("key 1", "value 1")
-                .additionalData("key 2", "value 2")
+                .additionalData(GenericData.class, new Action<GenericDataSpec>() {
+                    @Override
+                    void execute(GenericDataSpec spec) {
+                        spec.put("key 1", "value 1")
+                        spec.put("key 2", "value 2")
+                    }
+                })
         }
 
         when:
@@ -197,7 +205,30 @@ class ValidationProblemSerializationTest extends Specification {
         deserialized[0].definition.id.displayName == "label"
         deserialized[0].locations == [] as List
         deserialized[0].definition.documentationLink == null
-        deserialized[0].additionalData["key 1"] == "value 1"
-        deserialized[0].additionalData["key 2"] == "value 2"
+        (deserialized[0].additionalData as GenericData).asMap["key 1"] == "value 1"
+        (deserialized[0].additionalData as GenericData).asMap["key 2"] == "value 2"
+    }
+
+    def "can serialize type validation problem"() { // TODO (donat) have coverage for all supported additional data types
+        given:
+        def problem = problemReporter.create {
+            it.id("id", "label", GradleCoreProblemGroup.validation().type())
+                .additionalData(GenericData,{
+                    it.put('foo', 'bar')
+                })
+        }
+
+        when:
+        def json = gson.toJson([problem])
+        def deserialized = ValidationProblemSerialization.parseMessageList(json)
+
+        then:
+        deserialized.size() == 1
+        deserialized[0].definition.id.name == "id"
+        deserialized[0].definition.id.displayName == "label"
+        deserialized[0].locations == [] as List
+        deserialized[0].definition.documentationLink == null
+        deserialized[0].additionalData instanceof GenericData
+        (deserialized[0].additionalData as GenericData).asMap == ['foo' : 'bar']
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 the original author or authors.
+ * Copyright 2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package org.gradle.tooling.internal.protocol.problem;
+package org.gradle.api.problems.internal;
 
-/**
- * @since 8.9
- */
-public interface InternalDeprecationAdditionalData extends InternalAdditionalData {
+public interface DeprecationData extends AdditionalData<DeprecationDataSpec> {
 
-    enum DeprecationType {
+    enum Type {
         USER_CODE_DIRECT,
         USER_CODE_INDIRECT,
         BUILD_INVOCATION
     }
 
-    DeprecationType getDeprecationType();
+    Type getType();
 }

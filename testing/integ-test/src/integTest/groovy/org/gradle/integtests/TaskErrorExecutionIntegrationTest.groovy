@@ -147,7 +147,7 @@ class TaskErrorExecutionIntegrationTest extends AbstractIntegrationSpec implemen
                 'Assign a value to \'destFile\'',
                 'Mark property \'destFile\' as optional',
             ]
-            additionalData == [
+            additionalData.asMap == [
                 'typeName' : 'CustomTask',
                 'propertyName' : 'destFile',
             ]
@@ -159,7 +159,7 @@ class TaskErrorExecutionIntegrationTest extends AbstractIntegrationSpec implemen
                 'Assign a value to \'srcFile\'',
                 'Mark property \'srcFile\' as optional',
             ]
-            additionalData == [
+            additionalData.asMap == [
                 'typeName' : 'CustomTask',
                 'propertyName' : 'srcFile',
             ]

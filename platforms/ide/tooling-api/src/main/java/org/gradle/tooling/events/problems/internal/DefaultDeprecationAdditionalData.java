@@ -14,27 +14,25 @@
  * limitations under the License.
  */
 
-package org.gradle.internal.build.event.types;
+package org.gradle.tooling.events.problems.internal;
 
-import org.gradle.api.NonNullApi;
-import org.gradle.tooling.internal.protocol.problem.InternalDeprecationAdditionalData;
+import org.gradle.tooling.events.problems.DeprecationAdditionalData;
 
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 
-@NonNullApi
-public class DefaultInternalDeprecationAdditionalData implements InternalDeprecationAdditionalData, Serializable {
+public class DefaultDeprecationAdditionalData implements DeprecationAdditionalData, Serializable {
 
     private final DeprecationType deprecationType;
 
-    public DefaultInternalDeprecationAdditionalData(DeprecationType deprecationType) {
+    public DefaultDeprecationAdditionalData(DeprecationType deprecationType) {
         this.deprecationType = deprecationType;
     }
 
     @Override
     public Map<String, Object> getAsMap() {
-        return Collections.singletonMap("type", deprecationType.name());
+        return Collections.<String, Object>singletonMap("type", deprecationType.name());
     }
 
     @Override
