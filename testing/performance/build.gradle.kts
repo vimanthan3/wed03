@@ -15,6 +15,7 @@ dependencies {
     performanceTestImplementation(project(":build-option"))
     performanceTestImplementation(libs.slf4jApi)
     performanceTestImplementation(libs.commonsIo)
+    performanceTestImplementation(libs.commonsLang)
     performanceTestImplementation(libs.commonsCompress)
     performanceTestImplementation(libs.jetty)
     performanceTestImplementation(testFixtures(project(":tooling-api")))

@@ -94,7 +94,7 @@ public class ZipFileTree extends AbstractArchiveFileTree {
         File expandedDir = getExpandedDir();
         decompressionCoordinator.exclusiveAccessTo(expandedDir, () -> {
             AtomicBoolean stopFlag = new AtomicBoolean();
-            try (ZipFile zip = ZipFile.builder().setFile(zipFile).get()) {
+            try (ZipFile zip = new ZipFile(zipFile)) {
                 // The iteration order of zip.getEntries() is based on the hash of the zip entry. This isn't much use
                 // to us. So, collect the entries in a map and iterate over them in alphabetical order.
                 Iterator<ZipArchiveEntry> sortedEntries = entriesSortedByName(zip);

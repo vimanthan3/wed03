@@ -17,7 +17,7 @@
 package org.gradle.performance.regression.corefeature
 
 import org.apache.commons.io.FileUtils
-import org.apache.commons.lang3.RandomStringUtils
+import org.apache.commons.lang.RandomStringUtils
 import org.gradle.performance.AbstractCrossVersionPerformanceTest
 import org.gradle.performance.annotations.RunFor
 import org.gradle.performance.annotations.Scenario
