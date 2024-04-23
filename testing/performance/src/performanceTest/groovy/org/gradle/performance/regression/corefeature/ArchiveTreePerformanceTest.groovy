@@ -35,12 +35,18 @@ class ArchiveTreePerformanceTest extends AbstractCrossVersionPerformanceTest {
     private static TestFile tempDir
     private static TestFile archiveContentsDir
 
+    def memory = "3G"
+
     def setupSpec() {
         tempDir = new TestFile("build/tmp/tmp-archive-performance")
         archiveContentsDir = tempDir.file("tmp-archive-contents")
         if (!archiveContentsDir.exists()) {
             generateArchiveContents(archiveContentsDir)
         }
+    }
+
+    def setup() {
+        runner.gradleOpts = ["-Xms${memory}", "-Xmx${memory}"]
     }
 
     @RunFor(
