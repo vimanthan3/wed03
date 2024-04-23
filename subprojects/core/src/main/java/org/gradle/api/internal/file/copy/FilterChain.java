@@ -63,6 +63,7 @@ public class FilterChain implements Transformer<InputStream, InputStream> {
      * Transforms the given InputStream. The original InputStream will be closed by the returned InputStream.
      */
     @Override
+    @SuppressWarnings("deprecation")
     public InputStream transform(InputStream original) {
         try {
             return new ReaderInputStream(transform(new InputStreamReader(original, charset)), charset);

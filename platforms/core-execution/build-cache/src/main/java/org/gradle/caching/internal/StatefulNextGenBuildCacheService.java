@@ -47,6 +47,7 @@ public interface StatefulNextGenBuildCacheService extends BuildCacheService, Clo
         } else {
             writer = new NextGenWriter() {
                 @Override
+                @SuppressWarnings("deprecation")
                 public InputStream openStream() throws IOException {
                     UnsynchronizedByteArrayOutputStream data = new UnsynchronizedByteArrayOutputStream();
                     writeTo(data);

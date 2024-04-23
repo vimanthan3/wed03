@@ -252,6 +252,7 @@ public class DefaultGradleRunner extends GradleRunner {
         return this;
     }
 
+    @SuppressWarnings("deprecation")
     private static OutputStream toOutputStream(Writer standardOutput) {
         return new WriterOutputStream(standardOutput, Charset.defaultCharset());
     }

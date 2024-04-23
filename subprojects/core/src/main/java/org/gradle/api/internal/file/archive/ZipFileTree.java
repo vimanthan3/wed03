@@ -82,6 +82,7 @@ public class ZipFileTree extends AbstractArchiveFileTree {
         return directoryFileTreeFactory.create(getExpandedDir());
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void visit(FileVisitor visitor) {
         File zipFile = fileProvider.get();
