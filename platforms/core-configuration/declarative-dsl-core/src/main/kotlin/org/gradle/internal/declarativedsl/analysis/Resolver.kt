@@ -1,5 +1,7 @@
 package org.gradle.internal.declarativedsl.analysis
 
+import org.gradle.declarative.dsl.schema.AnalysisSchema
+import org.gradle.declarative.dsl.schema.FqName
 import org.gradle.internal.declarativedsl.language.Block
 import org.gradle.internal.declarativedsl.language.Import
 
@@ -17,7 +19,7 @@ class ResolverImpl(
         val importContext = AnalysisContext(schema, emptyMap(), errorCollector)
         val importFqnBySimpleName = collectImports(imports, importContext) + schema.defaultImports.associateBy { it.simpleName }
 
-        val topLevelReceiver = ObjectOrigin.TopLevelReceiver(schema.topLevelReceiverType, topLevelBlock)
+        val topLevelReceiver = ObjectOrigin.TopLevelReceiver(schema.topLevelReceiverType as DefaultDataClass, topLevelBlock)
         val topLevelScope = AnalysisScope(null, topLevelReceiver, topLevelBlock)
 
         val context = AnalysisContext(schema, importFqnBySimpleName, errorCollector)
@@ -31,7 +33,7 @@ class ResolverImpl(
         analysisContext: AnalysisContext
     ): Map<String, FqName> = buildMap {
         trees.forEach { import ->
-            val fqn = FqName(
+            val fqn = DefaultFqName(
                 import.name.nameParts.dropLast(1).joinToString("."), import.name.nameParts.last()
             )
 

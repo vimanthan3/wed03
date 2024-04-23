@@ -18,40 +18,74 @@ package org.gradle.internal.declarativedsl.language
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import org.gradle.declarative.dsl.schema.DataType
 
 
-interface DataType {
-    sealed interface ConstantType<JvmType> : DataType
+interface DataTypeInternal : DataType {
+
+    sealed interface ConstantType<JvmType> : DataTypeInternal
+
     @Serializable
     @SerialName("int")
-    data object IntDataType : ConstantType<Int> {
+    data object IntType : ConstantType<Int> {
+
+        override fun isConstant(): Boolean = true
+
+        override fun getConstantType(): Class<Int> = Int::class.java
+
         override fun toString(): String = "Int"
     }
+
+
     @Serializable
     @SerialName("long")
-    data object LongDataType : ConstantType<Long> {
+    data object LongType : ConstantType<Long> {
+
+        override fun isConstant(): Boolean = true
+
+        override fun getConstantType(): Class<Long> = Long::class.java
+
         override fun toString(): String = "Long"
     }
+
+
     @Serializable
     @SerialName("string")
-    data object StringDataType : ConstantType<String> {
+    data object StringType : ConstantType<String> {
+
+        override fun isConstant(): Boolean = true
+
+        override fun getConstantType(): Class<String> = String::class.java
+
         override fun toString(): String = "String"
     }
+
+
     @Serializable
     @SerialName("boolean")
-    data object BooleanDataType : ConstantType<Boolean> {
+    data object BooleanType : ConstantType<Boolean> {
+
+        override fun isConstant(): Boolean = true
+        override fun getConstantType(): Class<Boolean> = Boolean::class.java
+
         override fun toString(): String = "Boolean"
     }
 
-    // TODO: implement nulls?
     @Serializable
     @SerialName("null")
-    data object NullType : DataType
+    data object NullType : DataTypeInternal { // TODO: implement nulls?
+
+        override fun isNull(): Boolean = true
+    }
+
 
     @Serializable
     @SerialName("unit")
-    data object UnitType : DataType
+    data object UnitType : DataTypeInternal {
 
-    // TODO: `Any` type?
-    // TODO: Support subtyping of some sort in the schema rather than via reflection?
+        override fun isUnit(): Boolean = true
+    }
+
+// TODO: `Any` type?
+// TODO: Support subtyping of some sort in the schema rather than via reflection?
 }

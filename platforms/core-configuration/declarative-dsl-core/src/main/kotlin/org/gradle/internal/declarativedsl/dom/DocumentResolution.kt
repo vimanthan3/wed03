@@ -16,11 +16,11 @@
 
 package org.gradle.internal.declarativedsl.dom
 
-import org.gradle.internal.declarativedsl.analysis.DataClass
-import org.gradle.internal.declarativedsl.analysis.DataProperty
-import org.gradle.internal.declarativedsl.language.DataType
-import org.gradle.internal.declarativedsl.analysis.SchemaFunction
-import org.gradle.internal.declarativedsl.analysis.SchemaMemberFunction
+import org.gradle.declarative.dsl.schema.DataProperty
+import org.gradle.declarative.dsl.schema.SchemaFunction
+import org.gradle.declarative.dsl.schema.SchemaMemberFunction
+import org.gradle.internal.declarativedsl.analysis.DefaultDataClass
+import org.gradle.internal.declarativedsl.language.DataTypeInternal
 
 
 sealed interface DocumentResolution {
@@ -30,20 +30,20 @@ sealed interface DocumentResolution {
     }
 
     sealed interface PropertyResolution : DocumentResolution {
-        data class PropertyAssignmentResolved(val receiverType: DataType, val property: DataProperty) : PropertyResolution, SuccessfulResolution
+        data class PropertyAssignmentResolved(val receiverType: DataTypeInternal, val property: DataProperty) : PropertyResolution, SuccessfulResolution
         data class PropertyNotAssigned(override val reasons: List<PropertyNotAssignedReason>) : PropertyResolution, UnsuccessfulResolution
     }
 
     sealed interface ElementResolution : DocumentResolution {
         sealed interface SuccessfulElementResolution : ElementResolution, SuccessfulResolution {
-            val elementType: DataType
+            val elementType: DataTypeInternal
 
             data class PropertyConfiguringElementResolved(
-                override val elementType: DataClass
+                override val elementType: DefaultDataClass
             ) : SuccessfulElementResolution
 
             data class ContainerElementResolved(
-                override val elementType: DataType,
+                override val elementType: DataTypeInternal,
                 val elementFactoryFunction: SchemaMemberFunction,
                 val isKeyArguments: Boolean
             ) : SuccessfulElementResolution

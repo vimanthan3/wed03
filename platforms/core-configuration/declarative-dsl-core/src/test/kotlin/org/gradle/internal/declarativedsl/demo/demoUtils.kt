@@ -1,13 +1,11 @@
 package org.gradle.internal.declarativedsl.demo
 
-import org.gradle.internal.declarativedsl.analysis.AnalysisSchema
-import org.gradle.internal.declarativedsl.language.DataType
-import org.gradle.internal.declarativedsl.analysis.DataTypeRef
-import org.gradle.internal.declarativedsl.analysis.FqName
+import org.gradle.declarative.dsl.schema.AnalysisSchema
 import org.gradle.internal.declarativedsl.analysis.ResolutionResult
 import org.gradle.internal.declarativedsl.analysis.Resolver
 import org.gradle.internal.declarativedsl.analysis.ref
 import org.gradle.internal.declarativedsl.analysis.tracingCodeResolver
+import org.gradle.internal.declarativedsl.language.DataTypeInternal
 import org.gradle.internal.declarativedsl.language.FailingResult
 import org.gradle.internal.declarativedsl.language.MultipleFailuresResult
 import org.gradle.internal.declarativedsl.language.ParsingError
@@ -24,13 +22,13 @@ import org.gradle.internal.declarativedsl.parsing.DefaultLanguageTreeBuilder
 import org.gradle.internal.declarativedsl.parsing.parse
 
 
-val int = DataType.IntDataType.ref
+val int = DataTypeInternal.IntType.ref
 
 
-val string = DataType.StringDataType.ref
+val string = DataTypeInternal.StringType.ref
 
 
-val boolean = DataType.BooleanDataType.ref
+val boolean = DataTypeInternal.BooleanType.ref
 
 
 fun AnalysisSchema.resolve(
@@ -105,12 +103,6 @@ fun printResolvedAssignments(result: ResolutionResult) {
 }
 
 
-inline fun <reified T> typeRef(): DataTypeRef.Name {
-    val parts = T::class.qualifiedName!!.split(".")
-    return DataTypeRef.Name(FqName(parts.dropLast(1).joinToString("."), parts.last()))
-}
-
-
 fun prettyStringFromReflection(objectReflection: ObjectReflection): String {
     val visitedIdentity = mutableSetOf<Long>()
 
@@ -119,7 +111,7 @@ fun prettyStringFromReflection(objectReflection: ObjectReflection): String {
         fun nextIndent() = "    ".repeat(depth + 1)
         when (current) {
             is ObjectReflection.ConstantValue -> append(
-                if (current.type == DataType.StringDataType)
+                if (current.type == DataTypeInternal.StringType)
                     "\"${current.value}\""
                 else current.value.toString()
             )

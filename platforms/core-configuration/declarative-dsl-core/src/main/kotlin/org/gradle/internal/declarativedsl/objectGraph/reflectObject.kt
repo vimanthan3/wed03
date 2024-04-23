@@ -2,29 +2,29 @@ package org.gradle.internal.declarativedsl.objectGraph
 
 import org.gradle.internal.declarativedsl.analysis.AssignmentMethod
 import org.gradle.internal.declarativedsl.analysis.DataAddition
-import org.gradle.internal.declarativedsl.analysis.DataClass
-import org.gradle.internal.declarativedsl.analysis.DataParameter
-import org.gradle.internal.declarativedsl.analysis.DataProperty
-import org.gradle.internal.declarativedsl.analysis.ExternalObjectProviderKey
-import org.gradle.internal.declarativedsl.analysis.FunctionSemantics
+import org.gradle.declarative.dsl.schema.DataParameter
+import org.gradle.declarative.dsl.schema.DataProperty
+import org.gradle.declarative.dsl.schema.ExternalObjectProviderKey
+import org.gradle.internal.declarativedsl.analysis.DefaultDataClass
+import org.gradle.internal.declarativedsl.analysis.FunctionSemanticsInternal
 import org.gradle.internal.declarativedsl.analysis.ObjectOrigin
 import org.gradle.internal.declarativedsl.analysis.PropertyReferenceResolution
 import org.gradle.internal.declarativedsl.analysis.ResolutionResult
 import org.gradle.internal.declarativedsl.analysis.TypeRefContext
 import org.gradle.internal.declarativedsl.analysis.getDataType
-import org.gradle.internal.declarativedsl.language.DataType
+import org.gradle.internal.declarativedsl.language.DataTypeInternal
 import org.gradle.internal.declarativedsl.objectGraph.AssignmentResolver.AssignmentResolutionResult.Assigned
 import org.gradle.internal.declarativedsl.objectGraph.AssignmentResolver.AssignmentResolutionResult.Unassigned
 import org.gradle.internal.declarativedsl.objectGraph.AssignmentResolver.ExpressionResolutionProgress.Ok
 
 
 sealed interface ObjectReflection {
-    val type: DataType
+    val type: DataTypeInternal
     val objectOrigin: ObjectOrigin
 
     data class DataObjectReflection(
         val identity: Long,
-        override val type: DataClass,
+        override val type: DefaultDataClass,
         override val objectOrigin: ObjectOrigin,
         val properties: Map<DataProperty, PropertyValueReflection>,
         val addedObjects: List<ObjectReflection>,
@@ -33,13 +33,13 @@ sealed interface ObjectReflection {
     ) : ObjectReflection
 
     data class ConstantValue(
-        override val type: DataType.ConstantType<*>,
+        override val type: DataTypeInternal.ConstantType<*>,
         override val objectOrigin: ObjectOrigin.ConstantOrigin,
         val value: Any
     ) : ObjectReflection
 
     data class External(
-        override val type: DataType,
+        override val type: DataTypeInternal,
         override val objectOrigin: ObjectOrigin.External,
     ) : ObjectReflection {
         val key: ExternalObjectProviderKey
@@ -47,17 +47,17 @@ sealed interface ObjectReflection {
     }
 
     data class Null(override val objectOrigin: ObjectOrigin) : ObjectReflection {
-        override val type: DataType
-            get() = DataType.NullType
+        override val type: DataTypeInternal
+            get() = DataTypeInternal.NullType
     }
 
     data class DefaultValue(
-        override val type: DataType,
+        override val type: DataTypeInternal,
         override val objectOrigin: ObjectOrigin
     ) : ObjectReflection
 
     data class PureFunctionInvocation(
-        override val type: DataType,
+        override val type: DataTypeInternal,
         override val objectOrigin: ObjectOrigin.FunctionOrigin,
         val parameterResolution: Map<DataParameter, ObjectReflection>
     ) : ObjectReflection
@@ -65,7 +65,7 @@ sealed interface ObjectReflection {
     data class AddedByUnitInvocation(
         override val objectOrigin: ObjectOrigin
     ) : ObjectReflection {
-        override val type = DataType.UnitType
+        override val type = DataTypeInternal.UnitType
     }
 }
 
@@ -85,7 +85,7 @@ fun reflect(
     }
     return when (objectOrigin) {
         is ObjectOrigin.ConstantOrigin -> ObjectReflection.ConstantValue(
-            type as DataType.ConstantType<*>,
+            type as DataTypeInternal.ConstantType<*>,
             objectOrigin,
             objectOrigin.literal.value
         )
@@ -94,45 +94,46 @@ fun reflect(
 
         is ObjectOrigin.NullObjectOrigin -> ObjectReflection.Null(objectOrigin)
 
-        is ObjectOrigin.TopLevelReceiver -> reflectData(0, type as DataClass, objectOrigin, context)
+        is ObjectOrigin.TopLevelReceiver -> reflectData(0, type as DefaultDataClass, objectOrigin, context)
 
-        is ObjectOrigin.ConfiguringLambdaReceiver -> reflectData(-1L, type as DataClass, objectOrigin, context)
+        is ObjectOrigin.ConfiguringLambdaReceiver -> reflectData(-1L, type as DefaultDataClass, objectOrigin, context)
 
         is ObjectOrigin.PropertyDefaultValue -> reflectDefaultValue(objectOrigin, context)
         is ObjectOrigin.FunctionInvocationOrigin -> context.functionCall(objectOrigin.invocationId) {
-            when (objectOrigin.function.semantics) {
-                is FunctionSemantics.AddAndConfigure -> {
-                    if (type == DataType.UnitType) {
+            val semantics = objectOrigin.function.semantics
+            when (semantics as FunctionSemanticsInternal) {
+                is FunctionSemanticsInternal.AddAndConfigure -> {
+                    if (type.isUnit) {
                         ObjectReflection.AddedByUnitInvocation(objectOrigin)
                     } else {
                         reflectData(
                             objectOrigin.invocationId,
-                            type as DataClass,
+                            type as DefaultDataClass,
                             objectOrigin,
                             context
                         )
                     }
                 }
 
-                is FunctionSemantics.Pure -> ObjectReflection.PureFunctionInvocation(
+                is FunctionSemanticsInternal.Pure -> ObjectReflection.PureFunctionInvocation(
                     type,
                     objectOrigin,
                     objectOrigin.parameterBindings.bindingMap.mapValues { reflect(it.value, context) }
                 )
 
-                is FunctionSemantics.AccessAndConfigure -> {
+                is FunctionSemanticsInternal.AccessAndConfigure -> {
                     when (objectOrigin) {
                         is ObjectOrigin.AccessAndConfigureReceiver -> reflect(objectOrigin.delegate, context)
                         else -> error("unexpected origin type")
                     }
                 }
-                is FunctionSemantics.Builder -> error("can't appear here")
+                is FunctionSemanticsInternal.Builder -> error("can't appear here")
             }
         }
 
         is ObjectOrigin.PropertyReference,
         is ObjectOrigin.FromLocalValue -> error("value origin needed")
-        is ObjectOrigin.CustomConfigureAccessor -> reflectData(-1L, type as DataClass, objectOrigin, context)
+        is ObjectOrigin.CustomConfigureAccessor -> reflectData(-1L, type as DefaultDataClass, objectOrigin, context)
 
         is ObjectOrigin.ImplicitThisReceiver -> reflect(objectOrigin.resolvedTo, context)
         is ObjectOrigin.AddAndConfigureReceiver -> reflect(objectOrigin.receiver, context)
@@ -145,10 +146,10 @@ fun reflectDefaultValue(
     context: ReflectionContext
 ): ObjectReflection {
     return when (val type = context.typeRefContext.getDataType(objectOrigin)) {
-        is DataType.ConstantType<*> -> ObjectReflection.DefaultValue(type, objectOrigin)
-        is DataClass -> reflectData(-1L, type, objectOrigin, context)
-        DataType.NullType -> error("Null type can't appear in property types")
-        DataType.UnitType -> error("Unit can't appear in property types")
+        is DataTypeInternal.ConstantType<*> -> ObjectReflection.DefaultValue(type, objectOrigin)
+        is DefaultDataClass -> reflectData(-1L, type, objectOrigin, context)
+        DataTypeInternal.NullType -> error("Null type can't appear in property types")
+        DataTypeInternal.UnitType -> error("Unit can't appear in property types")
         else -> { error("Unhandled data type: ${type.javaClass.simpleName}") }
     }
 }
@@ -156,7 +157,7 @@ fun reflectDefaultValue(
 
 fun reflectData(
     identity: Long,
-    type: DataClass,
+    type: DefaultDataClass,
     objectOrigin: ObjectOrigin,
     context: ReflectionContext
 ): ObjectReflection.DataObjectReflection {
@@ -164,7 +165,7 @@ fun reflectData(
         val referenceResolution = PropertyReferenceResolution(objectOrigin, it)
         when (val assignment = context.resolveAssignment(referenceResolution)) {
             is Assigned -> it to PropertyValueReflection(reflect(assignment.objectOrigin, context), assignment.assignmentMethod)
-            else -> if (it.hasDefaultValue) {
+            else -> if (it.hasDefaultValue()) {
                 it to PropertyValueReflection(reflect(ObjectOrigin.PropertyDefaultValue(objectOrigin, it, objectOrigin.originElement), context), AssignmentMethod.AsConstructed)
             } else null
         }

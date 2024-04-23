@@ -17,7 +17,6 @@
 package org.gradle.internal.declarativedsl.analysis
 
 import org.gradle.internal.declarativedsl.language.Assignment
-import org.gradle.internal.declarativedsl.language.DataType
 import org.gradle.internal.declarativedsl.language.Expr
 import org.gradle.internal.declarativedsl.language.FunctionCall
 import org.gradle.internal.declarativedsl.language.LocalValue
@@ -62,7 +61,7 @@ class StatementResolverImpl(
             null
         } else {
             var hasErrors = false
-            if (lhsResolution.property.isReadOnly) {
+            if (lhsResolution.property.isReadOnly()) {
                 errorCollector.collect(ResolutionError(assignment, ErrorReason.ReadOnlyPropertyAssignment(lhsResolution.property)))
                 hasErrors = true
             }
@@ -73,7 +72,7 @@ class StatementResolverImpl(
             } else {
                 val rhsType = getDataType(rhsResolution)
                 val lhsExpectedType = resolveRef(lhsResolution.property.type)
-                if (rhsType == DataType.UnitType) {
+                if (rhsType.isUnit) {
                     errorCollector.collect(ResolutionError(assignment, ErrorReason.UnitAssignment))
                     hasErrors = true
                 }
@@ -97,7 +96,7 @@ class StatementResolverImpl(
         if (rhs == null) {
             errorCollector.collect(ResolutionError(localValue, ErrorReason.UnresolvedAssignmentRhs))
         } else {
-            if (getDataType(rhs) == DataType.UnitType) {
+            if (getDataType(rhs).isUnit) {
                 errorCollector.collect(ResolutionError(localValue, ErrorReason.UnitAssignment))
             }
             currentScopes.last().declareLocal(localValue, rhs, errorCollector)
@@ -115,12 +114,11 @@ class StatementResolverImpl(
             is ObjectOrigin.ConstantOrigin -> false
             is ObjectOrigin.External -> true
             is ObjectOrigin.FunctionOrigin -> {
-                val semantics = objectOrigin.function.semantics
-                when (semantics) {
-                    is FunctionSemantics.Builder -> error("should be impossible?")
-                    is FunctionSemantics.AccessAndConfigure -> true
-                    is FunctionSemantics.AddAndConfigure -> true
-                    is FunctionSemantics.Pure -> false
+                when (objectOrigin.function.semantics as FunctionSemanticsInternal) {
+                    is FunctionSemanticsInternal.Builder -> error("should be impossible?")
+                    is FunctionSemanticsInternal.AccessAndConfigure -> true
+                    is FunctionSemanticsInternal.AddAndConfigure -> true
+                    is FunctionSemanticsInternal.Pure -> false
                 }
             }
 
@@ -132,7 +130,7 @@ class StatementResolverImpl(
         }
 
         return when {
-            obj.function.semantics is FunctionSemantics.Pure -> true
+            obj.function.semantics is FunctionSemanticsInternal.Pure -> true
             obj is ObjectOrigin.BuilderReturnedReceiver -> !isPotentiallyPersistentReceiver(obj.receiver)
             else -> false
         }
