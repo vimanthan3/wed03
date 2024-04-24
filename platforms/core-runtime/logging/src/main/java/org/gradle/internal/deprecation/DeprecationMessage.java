@@ -51,8 +51,8 @@ class DeprecationMessage {
         this.problemId = problemId;
     }
 
-    DeprecatedFeatureUsage toDeprecatedFeatureUsage(Class<?> calledFrom) {
-        return new DeprecatedFeatureUsage(summary, removalDetails, advice, context, documentation, usageType, problemIdDisplayName, problemId, calledFrom);
+    DeprecatedFeatureUsage toDeprecatedFeatureUsage() {
+        return new DeprecatedFeatureUsage(summary, removalDetails, advice, context, documentation, usageType, problemIdDisplayName, problemId);
     }
 
 }

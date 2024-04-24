@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 the original author or authors.
+ * Copyright 2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,17 @@
  * limitations under the License.
  */
 
-package org.gradle.internal.featurelifecycle;
+package org.gradle.internal.problems.failure;
 
-public class IncubatingFeatureUsage extends FeatureUsage {
-    public IncubatingFeatureUsage(String summary, Class<?> calledFrom) {
-        super(summary);
-    }
+public interface StackFramePredicate {
+
+    StackFramePredicate USER_CODE = new StackFramePredicate() {
+        @Override
+        public boolean test(StackTraceElement frame, StackTraceRelevance relevance) {
+            return StackTraceRelevance.USER_CODE.equals(relevance);
+        }
+    };
+
+    boolean test(StackTraceElement frame, StackTraceRelevance relevance);
+
 }

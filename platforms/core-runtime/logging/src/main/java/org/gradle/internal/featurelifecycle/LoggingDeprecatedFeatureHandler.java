@@ -31,6 +31,8 @@ import org.gradle.internal.deprecation.DeprecatedFeatureUsage;
 import org.gradle.internal.logging.LoggingConfigurationBuildOptions;
 import org.gradle.internal.operations.BuildOperationProgressEventEmitter;
 import org.gradle.internal.problems.NoOpProblemDiagnosticsFactory;
+import org.gradle.internal.problems.failure.Failure;
+import org.gradle.internal.problems.failure.StackFramePredicate;
 import org.gradle.problems.Location;
 import org.gradle.problems.ProblemDiagnostics;
 import org.gradle.problems.buildtree.ProblemStream;
@@ -77,7 +79,7 @@ public class LoggingDeprecatedFeatureHandler implements FeatureHandler<Deprecate
     @Override
     public void featureUsed(final DeprecatedFeatureUsage usage) {
         deprecationsFound = true;
-        final ProblemDiagnostics diagnostics = problemStream.forCurrentCaller(new StackTraceSanitizer(usage.getCalledFrom()));
+        final ProblemDiagnostics diagnostics = problemStream.forCurrentCaller();
         if (warningMode.shouldDisplayMessages()) {
             maybeLogUsage(usage, diagnostics);
         }
@@ -115,7 +117,7 @@ public class LoggingDeprecatedFeatureHandler implements FeatureHandler<Deprecate
     }
 
     private static String getDefaultDeprecationIdDisplayName(DeprecatedFeatureUsage usage) {
-        if(usage.getProblemId() != null) {
+        if (usage.getProblemId() != null) {
             return usage.getProblemId();
         }
         return createDefaultDeprecationId(usage.getProblemIdDisplayName());
@@ -138,7 +140,8 @@ public class LoggingDeprecatedFeatureHandler implements FeatureHandler<Deprecate
     private void maybeLogUsage(DeprecatedFeatureUsage usage, ProblemDiagnostics diagnostics) {
         String featureMessage = usage.formattedMessage();
         Location location = diagnostics.getLocation();
-        if (!loggedUsages.add(featureMessage) && location == null && diagnostics.getStack().isEmpty()) {
+        Failure stackTracing = diagnostics.getFailure();
+        if (!loggedUsages.add(featureMessage) && location == null && stackTracing == null) {
             // This usage does not contain any useful diagnostics and the usage has already been logged, so skip it
             return;
         }
@@ -148,27 +151,75 @@ public class LoggingDeprecatedFeatureHandler implements FeatureHandler<Deprecate
                 .append(SystemProperties.getInstance().getLineSeparator());
         }
         message.append(featureMessage);
-        if (location != null && !loggedUsages.add(message.toString()) && diagnostics.getStack().isEmpty()) {
+        if (location != null && !loggedUsages.add(message.toString()) && stackTracing == null) {
             // This usage has no stack trace and has already been logged with the same location, so skip it
             return;
         }
-        displayDeprecationIfSameMessageNotDisplayedBefore(message, diagnostics.getStack());
+
+        displayDeprecationIfSameMessageNotDisplayedBefore(message, stackTracing);
     }
 
-    private void displayDeprecationIfSameMessageNotDisplayedBefore(StringBuilder message, List<StackTraceElement> callStack) {
+    private void displayDeprecationIfSameMessageNotDisplayedBefore(StringBuilder messageBuilder, @Nullable Failure stackTracing) {
+        if (stackTracing == null) {
+            displayDeprecationIfSameMessageNotDisplayedBefore(messageBuilder.toString());
+            return;
+        }
+
+        if (isTraceLoggingEnabled()) {
+            printFullStackTraceIfUnique(messageBuilder, stackTracing);
+        } else {
+            appendFirstUserCodeStackFrame(messageBuilder, stackTracing);
+            displayDeprecationIfSameMessageNotDisplayedBefore(messageBuilder.toString());
+        }
+    }
+
+    private void printFullStackTraceIfUnique(StringBuilder messageBuilder, Failure stackTracing) {
+        List<StackTraceElement> callStack = stackTracing.getStackTrace();
+
         // Let's cut the first 10 lines of stack traces as the "key" to identify a deprecation message uniquely.
         // Even when two deprecation messages are emitted from the same location,
         // the stack traces at very bottom might be different due to thread pool scheduling.
-        appendLogTraceIfNecessary(message, callStack, 0, 10);
-        if (loggedMessages.add(message.toString())) {
-            appendLogTraceIfNecessary(message, callStack, 10, callStack.size());
-            LOGGER.warn(message.toString());
+        appendLogTraceIfNecessary(messageBuilder, callStack, 0, 10);
+        if (loggedMessages.add(messageBuilder.toString())) {
+            appendLogTraceIfNecessary(messageBuilder, callStack, 10, callStack.size());
+            displayMessage(messageBuilder.toString());
+        }
+    }
+
+    private static void appendFirstUserCodeStackFrame(StringBuilder messageBuilder, Failure stackTracing) {
+        int firstUserCode = stackTracing.indexOfStackFrame(0, StackFramePredicate.USER_CODE);
+        if (firstUserCode == -1) {
+            return;
+        }
+
+        StackTraceElement element = stackTracing.getStackTrace().get(firstUserCode);
+        String lineSeparator = SystemProperties.getInstance().getLineSeparator();
+        appendStackTraceElement(element, messageBuilder, lineSeparator);
+        appendRunWithStacktraceInfo(messageBuilder, lineSeparator);
+    }
+
+    private void displayDeprecationIfSameMessageNotDisplayedBefore(String message) {
+        if (loggedMessages.add(message)) {
+            LOGGER.warn(message);
+        }
+    }
+
+    private static void displayMessage(String message) {
+        LOGGER.warn(message);
+    }
+
+    private static List<StackTraceElement> selectStackTrace(ProblemDiagnostics diagnostics) {
+        Failure failure = diagnostics.getFailure();
+        if (isTraceLoggingEnabled() && failure != null) {
+            return failure.getStackTrace();
+        } else {
+            return diagnostics.getMinifiedStackTrace();
         }
     }
 
     private void fireDeprecatedUsageBuildOperationProgress(DeprecatedFeatureUsage usage, ProblemDiagnostics diagnostics) {
         if (progressEventEmitter != null) {
-            progressEventEmitter.emitNowIfCurrent(new DefaultDeprecatedUsageProgressDetails(usage, diagnostics));
+            progressEventEmitter.emitNowIfCurrent(new DefaultDeprecatedUsageProgressDetails(usage, selectStackTrace(diagnostics)));
         }
     }
 
