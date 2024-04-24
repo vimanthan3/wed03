@@ -23,11 +23,10 @@ import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.declarative.dsl.schema.DataConstructor
 import org.gradle.declarative.dsl.schema.DataParameter
 import org.gradle.declarative.dsl.schema.DataTopLevelFunction
-import org.gradle.declarative.dsl.schema.FunctionSemantics.ConfigureBlockRequirement.NOT_ALLOWED
 import org.gradle.declarative.dsl.schema.SchemaMemberFunction
 import org.gradle.internal.declarativedsl.analysis.DataMemberFunction
 import org.gradle.internal.declarativedsl.analysis.DefaultDataParameter
-import org.gradle.internal.declarativedsl.analysis.FunctionSemanticsInternal
+import org.gradle.internal.declarativedsl.analysis.DefaultFunctionSemantics
 import org.gradle.internal.declarativedsl.analysis.ParameterSemanticsInternal
 import org.gradle.internal.declarativedsl.analysis.ParameterValueBinding
 import org.gradle.internal.declarativedsl.evaluationSchema.EvaluationSchemaComponent
@@ -93,7 +92,7 @@ class DependencyFunctionsExtractor(private val configurations: DependencyConfigu
                     configurationName,
                     listOf(projectDependencyParam),
                     false,
-                    FunctionSemanticsInternal.AddAndConfigure(ProjectDependency::class.toDataTypeRef(), NOT_ALLOWED)
+                    DefaultFunctionSemantics.DefaultAddAndConfigure(ProjectDependency::class.toDataTypeRef(), DefaultFunctionSemantics.DefaultConfigureBlockRequirement.DefaultNotAllowed)
                 )
             }
         } else emptyList()
