@@ -1,11 +1,16 @@
 package org.gradle.internal.declarativedsl.analysis
 
 import org.gradle.internal.declarativedsl.language.AccessChain
-import org.gradle.internal.declarativedsl.language.DataType
 import org.gradle.internal.declarativedsl.language.LanguageTreeElement
 import org.gradle.internal.declarativedsl.language.LocalValue
 import org.gradle.internal.declarativedsl.language.PropertyAccess
 import org.gradle.internal.declarativedsl.language.asChainOrNull
+import org.gradle.internal.declarativedsl.schema.DataClass
+import org.gradle.internal.declarativedsl.schema.DataProperty
+import org.gradle.internal.declarativedsl.schema.DataType
+import org.gradle.internal.declarativedsl.schema.FqName
+import org.gradle.internal.declarativedsl.schemaimpl.FqNameImpl
+import org.gradle.internal.declarativedsl.schemaimpl.isWriteOnly
 
 
 interface PropertyAccessResolver {
@@ -217,4 +222,4 @@ class PropertyAccessResolverImpl(
 
 
 private
-fun AccessChain.asFqName(): FqName = FqName(nameParts.dropLast(1).joinToString("."), nameParts.last())
+fun AccessChain.asFqName(): FqName = FqNameImpl(nameParts.dropLast(1).joinToString("."), nameParts.last())

@@ -19,6 +19,7 @@ package org.gradle.internal.declarativedsl.analysis
 import org.gradle.declarative.dsl.model.annotations.HiddenInDeclarativeDsl
 import org.gradle.declarative.dsl.model.annotations.Restricted
 import org.gradle.internal.declarativedsl.demo.resolve
+import org.gradle.internal.declarativedsl.schemaimpl.FqNameImpl
 import org.gradle.internal.declarativedsl.schemaBuilder.schemaFromTypes
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -41,7 +42,7 @@ class HiddenInDslTest {
 
     @Test
     fun `handles the hidden properties correctly`() {
-        val aType = schema.dataClassesByFqName.getValue(FqName.parse(HasHiddenProperty::class.qualifiedName!!))
+        val aType = schema.dataClassesByFqName.getValue(FqNameImpl.parse(HasHiddenProperty::class.qualifiedName!!))
         assertTrue { aType.properties.single { it.name == "y" }.isHiddenInDsl }
 
         val result = schema.resolve(

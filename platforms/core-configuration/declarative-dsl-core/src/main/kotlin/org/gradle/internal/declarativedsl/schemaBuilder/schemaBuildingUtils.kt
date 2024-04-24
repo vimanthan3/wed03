@@ -16,10 +16,11 @@
 
 package org.gradle.internal.declarativedsl.schemaBuilder
 
-import org.gradle.internal.declarativedsl.language.DataType
-import org.gradle.internal.declarativedsl.analysis.DataTypeRef
-import org.gradle.internal.declarativedsl.analysis.FqName
-import org.gradle.internal.declarativedsl.analysis.ref
+import org.gradle.internal.declarativedsl.schemaimpl.DataTypeImpl
+import org.gradle.internal.declarativedsl.schemaimpl.DataTypeRefImpl
+import org.gradle.internal.declarativedsl.schemaimpl.FqNameImpl
+import org.gradle.internal.declarativedsl.schemaimpl.ref
+import org.gradle.internal.declarativedsl.schema.DataTypeRef
 import kotlin.reflect.KCallable
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
@@ -29,12 +30,12 @@ import kotlin.reflect.KType
 
 fun KClassifier.toDataTypeRef(): DataTypeRef =
     when (this) {
-        Unit::class -> DataType.UnitType.ref
-        Int::class -> DataType.IntDataType.ref
-        String::class -> DataType.StringDataType.ref
-        Boolean::class -> DataType.BooleanDataType.ref
-        Long::class -> DataType.LongDataType.ref
-        is KClass<*> -> DataTypeRef.Name(FqName.parse(checkNotNull(qualifiedName)))
+        Unit::class -> DataTypeImpl.UnitTypeImpl.ref
+        Int::class -> DataTypeImpl.IntDataTypeImpl.ref
+        String::class -> DataTypeImpl.StringDataTypeImpl.ref
+        Boolean::class -> DataTypeImpl.BooleanDataTypeImpl.ref
+        Long::class -> DataTypeImpl.LongDataTypeImpl.ref
+        is KClass<*> -> DataTypeRefImpl.NameImpl(FqNameImpl.parse(checkNotNull(qualifiedName)))
         else -> error("unexpected type")
     }
 
@@ -67,7 +68,7 @@ val KCallable<*>.annotationsWithGetters: List<Annotation>
     get() = this.annotations + if (this is KProperty) this.getter.annotations else emptyList()
 
 
-fun KType.toDataTypeRefOrError() =
+fun KType.toDataTypeRefOrError(): DataTypeRef =
     toDataTypeRef() ?: error("failed to convert type $this to data type")
 
 

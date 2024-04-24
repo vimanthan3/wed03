@@ -1,12 +1,24 @@
 package org.gradle.internal.declarativedsl.analysis
 
-import org.gradle.internal.declarativedsl.language.DataType
 import org.gradle.internal.declarativedsl.language.FunctionCall
 import org.gradle.internal.declarativedsl.language.LanguageTreeElement
 import org.gradle.internal.declarativedsl.language.Literal
 import org.gradle.internal.declarativedsl.language.LocalValue
 import org.gradle.internal.declarativedsl.language.Null
 import org.gradle.internal.declarativedsl.language.PropertyAccess
+import org.gradle.internal.declarativedsl.schema.ConfigureAccessor
+import org.gradle.internal.declarativedsl.schemaimpl.DataBuilderFunctionImpl
+import org.gradle.internal.declarativedsl.schema.DataClass
+import org.gradle.internal.declarativedsl.schema.DataConstructor
+import org.gradle.internal.declarativedsl.schema.DataParameter
+import org.gradle.internal.declarativedsl.schema.DataProperty
+import org.gradle.internal.declarativedsl.schema.DataType
+import org.gradle.internal.declarativedsl.schema.DataTypeRef
+import org.gradle.internal.declarativedsl.schema.ExternalObjectProviderKey
+import org.gradle.internal.declarativedsl.schema.FunctionSemantics
+import org.gradle.internal.declarativedsl.schema.SchemaFunction
+import org.gradle.internal.declarativedsl.schema.SchemaMemberFunction
+import org.gradle.internal.declarativedsl.schemaimpl.qualifiedName
 
 
 // TODO: report failures to resolve with potential candidates that could not work
@@ -30,7 +42,7 @@ data class AssignmentRecord(
 sealed interface AssignmentMethod {
     data object Property : AssignmentMethod
     data object AsConstructed : AssignmentMethod
-    data class BuilderFunction(val function: DataBuilderFunction) : AssignmentMethod
+    data class BuilderFunction(val function: DataBuilderFunctionImpl) : AssignmentMethod
 }
 
 
@@ -218,7 +230,7 @@ sealed interface ObjectOrigin {
     }
 
     data class External(val key: ExternalObjectProviderKey, override val originElement: PropertyAccess) : ObjectOrigin {
-        override fun toString(): String = "${key.type}"
+        override fun toString(): String = "${key.objectType}"
     }
 }
 

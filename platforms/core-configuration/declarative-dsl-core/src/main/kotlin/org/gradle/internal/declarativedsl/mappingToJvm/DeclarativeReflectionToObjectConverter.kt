@@ -1,14 +1,14 @@
 package org.gradle.internal.declarativedsl.mappingToJvm
 
 import org.gradle.internal.declarativedsl.analysis.AssignmentMethod
-import org.gradle.internal.declarativedsl.analysis.DataBuilderFunction
-import org.gradle.internal.declarativedsl.analysis.DataProperty
-import org.gradle.internal.declarativedsl.analysis.ExternalObjectProviderKey
+import org.gradle.internal.declarativedsl.schemaimpl.DataBuilderFunctionImpl
 import org.gradle.internal.declarativedsl.analysis.ObjectOrigin
 import org.gradle.internal.declarativedsl.analysis.ParameterValueBinding
 import org.gradle.internal.declarativedsl.mappingToJvm.DeclarativeReflectionToObjectConverter.ConversionFilter
 import org.gradle.internal.declarativedsl.objectGraph.ObjectReflection
 import org.gradle.internal.declarativedsl.objectGraph.PropertyValueReflection
+import org.gradle.internal.declarativedsl.schema.DataProperty
+import org.gradle.internal.declarativedsl.schema.ExternalObjectProviderKey
 
 
 class DeclarativeReflectionToObjectConverter(
@@ -142,7 +142,7 @@ class DeclarativeReflectionToObjectConverter(
     }
 
     private
-    fun invokeBuilderFunction(receiverOrigin: ObjectOrigin, function: DataBuilderFunction, valueOrigin: ObjectOrigin) {
+    fun invokeBuilderFunction(receiverOrigin: ObjectOrigin, function: DataBuilderFunctionImpl, valueOrigin: ObjectOrigin) {
         val receiverInstance = getObjectByResolvedOrigin(receiverOrigin)
             ?: error("Tried to invoke a function $function on a null receiver $receiverOrigin")
         val receiverKClass = receiverInstance::class
