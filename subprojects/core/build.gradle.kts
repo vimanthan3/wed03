@@ -115,6 +115,7 @@ dependencies {
     api(project(":resources"))
     api(project(":snapshots"))
     api(project(":worker-processes"))
+    api(project(":declarative-dsl-api"))
 
     api(libs.ant)
     api(libs.asm)

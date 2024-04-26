@@ -14,48 +14,51 @@
  * limitations under the License.
  */
 
-package org.gradle.api.internal.plugins;
+package org.gradle.api.internal.plugins.software;
 
 import org.gradle.api.InvalidUserDataException;
-import org.gradle.api.NonNullApi;
 import org.gradle.api.Plugin;
-import org.gradle.api.internal.plugins.software.SoftwareType;
+import org.gradle.api.internal.plugins.DslObject;
+import org.gradle.api.internal.plugins.PluginTarget;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.internal.tasks.properties.InspectionScheme;
 import org.gradle.api.plugins.ExtensionAware;
 import org.gradle.api.plugins.ExtensionContainer;
+import org.gradle.api.provider.Property;
 import org.gradle.configuration.ConfigurationTargetIdentifier;
 import org.gradle.internal.Cast;
 import org.gradle.internal.exceptions.DefaultMultiCauseException;
 import org.gradle.internal.properties.PropertyValue;
 import org.gradle.internal.properties.PropertyVisitor;
+import org.gradle.internal.properties.annotations.TypeMetadataStore;
+import org.gradle.internal.properties.bean.PropertyPairVisitor;
 import org.gradle.internal.reflect.DefaultTypeValidationContext;
 import org.gradle.internal.reflect.validation.TypeValidationProblemRenderer;
 import org.gradle.model.internal.type.ModelType;
 import org.gradle.plugin.software.internal.SoftwareTypeRegistry;
-import org.gradle.plugin.use.PluginId;
-import org.gradle.plugin.use.internal.DefaultPluginId;
 
 import javax.annotation.Nullable;
-import java.util.Optional;
-import java.util.function.Supplier;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
 /**
  * A {@link PluginTarget} that inspects the plugin for {@link SoftwareType} properties and adds them as extensions on the target prior to
- * applying the plugin via the delegate.
+ * applying the plugin via the delegate.  Once the plugin is applied, build-level conventions are then applied to the software type model objects.
  */
-@NonNullApi
-public class AddSoftwareTypesAsExtensionsPluginTarget implements PluginTarget {
+public class SoftwareTypeModelWiringPluginTarget implements PluginTarget {
+    private final ProjectInternal target;
     private final ExtensionAddingVisitor extensionAddingVisitor;
     private final PluginTarget delegate;
     private final InspectionScheme inspectionScheme;
 
     private final SoftwareTypeRegistry softwareTypeRegistry;
 
-    public AddSoftwareTypesAsExtensionsPluginTarget(ProjectInternal target, PluginTarget delegate, InspectionScheme inspectionScheme, SoftwareTypeRegistry softwareTypeRegistry) {
-        this.extensionAddingVisitor = new ExtensionAddingVisitor(target);
+    public SoftwareTypeModelWiringPluginTarget(ProjectInternal target, PluginTarget delegate, InspectionScheme inspectionScheme, SoftwareTypeRegistry softwareTypeRegistry) {
+        this.target = target;
+        this.extensionAddingVisitor = new ExtensionAddingVisitor(target, inspectionScheme.getMetadataStore());
         this.delegate = delegate;
         this.inspectionScheme = inspectionScheme;
         this.softwareTypeRegistry = softwareTypeRegistry;
@@ -69,6 +72,7 @@ public class AddSoftwareTypesAsExtensionsPluginTarget implements PluginTarget {
     @Override
     public void applyImperative(@Nullable String pluginId, Plugin<?> plugin) {
         if (softwareTypeRegistry.isRegistered(Cast.uncheckedCast(plugin.getClass()))) {
+            // Find the SoftwareType properties and add them as extensions on the Project object
             DefaultTypeValidationContext typeValidationContext = DefaultTypeValidationContext.withRootType(plugin.getClass(), false);
             inspectionScheme.getPropertyWalker().visitProperties(
                 plugin,
@@ -91,7 +95,23 @@ public class AddSoftwareTypesAsExtensionsPluginTarget implements PluginTarget {
             }
         }
 
+        // Call the delegate to apply the plugin
         delegate.applyImperative(pluginId, plugin);
+
+        // Apply build-level conventions for all software types
+        extensionAddingVisitor.getSoftwareTypes().forEach((softwareType, model) -> applyBuildLevelConventions(target, softwareType, model));
+    }
+
+    private void applyBuildLevelConventions(ProjectInternal target, SoftwareType softwareType, Object model) {
+        Object convention = target.getGradle().getSettings().getExtensions().getByName(softwareType.name());
+        inspectionScheme.getPropertyPairWalker().visitPropertyPairs(softwareType.modelPublicType(), Cast.uncheckedCast(model), Cast.uncheckedCast(convention), new PropertyPairVisitor() {
+            @Override
+            public <T> void visitPropertyTypePair(@Nullable Property<T> model, @Nullable Property<T> convention) {
+                if (model != null && convention != null && convention.isPresent()) {
+                    model.convention(convention);
+                }
+            }
+        });
     }
 
     @Override
@@ -101,10 +121,6 @@ public class AddSoftwareTypesAsExtensionsPluginTarget implements PluginTarget {
 
     private static String getPluginObjectDisplayName(Object parameterObject) {
         return ModelType.of(new DslObject(parameterObject).getDeclaredType()).getDisplayName();
-    }
-
-    private static Supplier<Optional<PluginId>> getOptionalSupplier(@Nullable String pluginId) {
-        return () -> Optional.ofNullable(pluginId).map(DefaultPluginId::of);
     }
 
     @Override
@@ -117,19 +133,29 @@ public class AddSoftwareTypesAsExtensionsPluginTarget implements PluginTarget {
         delegate.applyImperativeRulesHybrid(pluginId, plugin, declaringClass);
     }
 
-    @NonNullApi
     public static class ExtensionAddingVisitor implements PropertyVisitor {
         private final ProjectInternal target;
+        private final TypeMetadataStore typeMetadataStore;
+        private final Map<SoftwareType, Object> softwareTypes = new HashMap<>();
 
-        public ExtensionAddingVisitor(ProjectInternal target) {
+        public ExtensionAddingVisitor(ProjectInternal target, TypeMetadataStore typeMetadataStore) {
             this.target = target;
+            this.typeMetadataStore = typeMetadataStore;
+        }
+
+        public Map<SoftwareType, ?> getSoftwareTypes() {
+            return softwareTypes;
         }
 
         @Override
-        public void visitSoftwareTypeProperty(String propertyName, PropertyValue value, SoftwareType softwareType) {
+        public void visitSoftwareTypeProperty(String propertyName, PropertyValue propertyValue, SoftwareType softwareType) {
+            // Add software type as an extension
             ExtensionContainer extensions = ((ExtensionAware) target).getExtensions();
-            Class<?> returnType = softwareType.modelPublicType();
-            extensions.add(returnType, softwareType.name(), Cast.uncheckedNonnullCast(value.call()));
+            Class<?> publicType = softwareType.modelPublicType();
+            Object model = propertyValue.call();
+            extensions.add(publicType, softwareType.name(), Cast.uncheckedNonnullCast(model));
+
+            softwareTypes.put(softwareType, model);
         }
     }
 }
