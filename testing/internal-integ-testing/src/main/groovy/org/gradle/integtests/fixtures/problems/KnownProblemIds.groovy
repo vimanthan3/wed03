@@ -87,6 +87,8 @@ class KnownProblemIds {
         'deprecation:configurations-acting-as-both-root-and-variant' : 'Configurations should not act as both a resolution root and a variant simultaneously.',
         'deprecation:repository-jcenter' : 'The RepositoryHandler.jcenter() method has been deprecated.',
         'task-selection:no-matches' : 'cannot locate task',
+        'validation:configuration-cache-registration-of-listener-on-gradle-buildfinished-is-unsupported' : 'registration of listener on \'Gradle.buildFinished\' is unsupported',
+        'validation:configuration-cache-invocation-of-task-project-at-execution-time-is-unsupported' : 'invocation of \'Task.project\' at execution time is unsupported.',
         'validation:property-validation:annotation-invalid-in-context' : 'Invalid annotation in context',
         'validation:property-validation:cannot-use-optional-on-primitive-types' : 'Property should be annotated with @Optional',
         'validation:property-validation:cannot-write-output' : 'Property is not writable',
