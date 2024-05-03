@@ -17,7 +17,6 @@
 package org.gradle.integtests.fixtures.build
 
 import groovy.transform.CompileStatic
-import org.gradle.integtests.fixtures.GroovyBuildScriptLanguage
 import org.gradle.integtests.fixtures.RepoScriptBlockUtil
 import org.gradle.test.fixtures.dsl.GradleDsl
 import org.gradle.test.fixtures.file.TestFile
@@ -262,7 +261,7 @@ trait KotlinDslTestProjectInitiation {
         file(defaultBuildFileName)
     }
 
-    void buildFile(@GroovyBuildScriptLanguage String script) {
+    void buildFile(String script) {
         getBuildFile() << script
     }
 

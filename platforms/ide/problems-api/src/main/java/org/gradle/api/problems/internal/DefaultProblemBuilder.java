@@ -17,7 +17,7 @@
 package org.gradle.api.problems.internal;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+import org.gradle.api.Action;
 import org.gradle.api.problems.ProblemGroup;
 import org.gradle.api.problems.ProblemId;
 import org.gradle.api.problems.Severity;
@@ -25,11 +25,9 @@ import org.gradle.api.problems.SharedProblemGroup;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-public class DefaultProblemBuilder implements InternalProblemBuilder {
+public  class DefaultProblemBuilder implements InternalProblemBuilder {
     private ProblemId id;
     private String contextualLabel;
     private Severity severity;
@@ -38,7 +36,7 @@ public class DefaultProblemBuilder implements InternalProblemBuilder {
     private DocLink docLink;
     private List<String> solutions;
     private RuntimeException exception;
-    private final Map<String, Object> additionalData;
+    private AdditionalData<? extends AdditionalDataSpec> additionalData; // should be generic type
     private boolean collectLocation = false;
 
     public DefaultProblemBuilder(Problem problem) {
@@ -50,29 +48,22 @@ public class DefaultProblemBuilder implements InternalProblemBuilder {
         this.details = problem.getDetails();
         this.docLink = problem.getDefinition().getDocumentationLink();
         this.exception = problem.getException();
-        this.additionalData = new HashMap<String, Object>(problem.getAdditionalData());
+        this.additionalData = problem.getAdditionalData();
     }
 
     public DefaultProblemBuilder() {
         this.locations = new ArrayList<ProblemLocation>();
         this.solutions = new ArrayList<String>();
-        this.additionalData = new HashMap<String, Object>();
+        this.additionalData = null;
     }
 
     @Override
     public Problem build() {
-        // Label is mandatory
+        // id is mandatory
         if (id == null) {
             return invalidProblem("missing-id", "Problem id must be specified");
         } else if (id.getGroup() == null) {
             return invalidProblem("missing-parent", "Problem id must have a parent");
-        }
-
-        // We need to explicitly manage serializing the data from the daemon to the tooling API client, hence the restriction.
-        for (Object value : additionalData.values()) {
-            if (!(value instanceof String)) {
-                return invalidProblem("invalid-additional-data", "ProblemBuilder.additionalData() only supports values of type String");
-            }
         }
 
         ProblemDefinition problemDefinition = new DefaultProblemDefinition(id, getSeverity(), docLink);
@@ -90,7 +81,7 @@ public class DefaultProblemBuilder implements InternalProblemBuilder {
             ImmutableList.<ProblemLocation>of(),
             null,
             getExceptionForProblemInstantiation(),
-            ImmutableMap.<String, Object>of());
+            null);
     }
 
     public RuntimeException getExceptionForProblemInstantiation() {
@@ -209,8 +200,17 @@ public class DefaultProblemBuilder implements InternalProblemBuilder {
     }
 
     @Override
-    public InternalProblemBuilder additionalData(String key, Object value) {
-        this.additionalData.put(key, value);
+    @SuppressWarnings("unchecked")
+    public  <T extends AdditionalData<U>, U extends AdditionalDataSpec> InternalProblemBuilder additionalData(Class<? extends AdditionalData<U>> type, Action<? super U> config) {
+        if (additionalData == null) {
+            AdditionalDataBuilder<?> additionalDatabuilder = AdditionalDataBuilderFactory.builderFor(type);
+            config.execute((U) additionalDatabuilder);
+            additionalData = additionalDatabuilder.build();
+        } else {
+            AdditionalDataBuilder<?> additionalDatabuilder = AdditionalDataBuilderFactory.builderFor(additionalData);
+            config.execute((U) additionalDatabuilder);
+            additionalData = additionalDatabuilder.build();
+        }
         return this;
     }
 

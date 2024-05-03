@@ -16,9 +16,12 @@
 
 package org.gradle.internal.reflect.validation;
 
+import org.gradle.api.Action;
 import org.gradle.api.NonNullApi;
 import org.gradle.api.problems.ProblemGroup;
 import org.gradle.api.problems.Severity;
+import org.gradle.api.problems.internal.AdditionalData;
+import org.gradle.api.problems.internal.AdditionalDataSpec;
 import org.gradle.api.problems.internal.DocLink;
 import org.gradle.api.problems.internal.InternalProblemBuilder;
 import org.gradle.api.problems.internal.Problem;
@@ -115,8 +118,8 @@ class DelegatingProblemBuilder implements InternalProblemBuilder {
     }
 
     @Override
-    public InternalProblemBuilder additionalData(String key, Object value) {
-        return validateDelegate(delegate.additionalData(key, value));
+    public <T extends AdditionalData<U>, U extends AdditionalDataSpec> InternalProblemBuilder additionalData(Class<? extends AdditionalData<U>> type, Action<? super U> config) {
+        return validateDelegate(delegate.additionalData(type, config));
     }
 
     @Override

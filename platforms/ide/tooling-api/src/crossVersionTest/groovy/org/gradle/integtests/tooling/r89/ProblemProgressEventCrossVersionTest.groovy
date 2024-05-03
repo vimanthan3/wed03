@@ -25,6 +25,7 @@ import org.gradle.test.fixtures.file.TestFile
 import org.gradle.tooling.BuildException
 import org.gradle.tooling.events.ProgressEvent
 import org.gradle.tooling.events.ProgressListener
+import org.gradle.tooling.events.problems.DeprecationAdditionalData
 import org.gradle.tooling.events.problems.LineInFileLocation
 import org.gradle.tooling.events.problems.Severity
 import org.gradle.tooling.events.problems.SingleProblemEvent
@@ -90,6 +91,8 @@ class ProblemProgressEventCrossVersionTest extends ToolingApiSpecification {
             locations.size() == 2
             (locations[0] as LineInFileLocation).path == "build file '$buildFile.path'" // FIXME: the path should not contain a prefix nor extra quotes
             (locations[1] as LineInFileLocation).path == "build file '$buildFile.path'"
+            additionalData instanceof DeprecationAdditionalData
+            (additionalData as DeprecationAdditionalData).deprecationType == DeprecationAdditionalData.DeprecationType.USER_CODE_DIRECT
         }
     }
 
@@ -250,6 +253,81 @@ class ProblemProgressEventCrossVersionTest extends ToolingApiSpecification {
         problems[0].failure.failure == null
     }
 
+    @spock.lang.IgnoreRest
+    def "Property validation failure should produce problem report with domain-specific additional data"() {
+        setup:
+        file('buildSrc/src/main/java/MyTask.java') << '''
+            import org.gradle.api.*;
+            import org.gradle.api.tasks.*;
+            import org.gradle.work.*;
+
+            @DisableCachingByDefault(because = "test task")
+            public class MyTask extends DefaultTask {
+                @Optional @Input
+                boolean getPrimitive() {
+                    return true;
+                }
+
+                @TaskAction public void execute() {}
+            }
+        '''
+        buildFile << '''
+            tasks.register('myTask', MyTask)
+        '''
+
+        when:
+        def listener = new ProblemProgressListener()
+        withConnection { connection ->
+            connection.newBuild()
+                .forTasks("myTask")
+                .addProgressListener(listener)
+
+                // TODO (donat) this is not needed for the final tes
+                .setStandardError(System.err)
+                .setStandardOutput(System.out)
+                .addArguments("--info")
+
+                .run()
+        }
+
+        then:
+        thrown(BuildException)
+        listener.problems.size() == 1
+    }
+
+    def "Dependency version catalog failure should produce problem report with domain-specific additional data"() {
+        setup:
+        def path = file("missing.toml")
+        settingsFile << """
+            dependencyResolutionManagement {
+                versionCatalogs {
+                    libs {
+                        from(files("missing.toml"))
+                    }
+                }
+            }
+        """
+
+
+        when:
+        def listener = new ProblemProgressListener()
+        withConnection { connection ->
+            connection.newBuild()
+                .forTasks("help")
+                .addProgressListener(listener)
+
+            // TODO (donat) this is not needed for the final tes
+                .setStandardError(System.err)
+                .setStandardOutput(System.out)
+                .addArguments("--info")
+
+                .run()
+        }
+
+        then:
+        thrown(BuildException)
+        listener.problems.size() == 1
+    }
 
     class ProblemProgressListener implements ProgressListener {
 

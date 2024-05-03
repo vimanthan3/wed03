@@ -845,9 +845,9 @@ tmpdir is currently ${System.getProperty("java.io.tmpdir")}""")
             }
             println "    ]"
         }
-        if (problem.additionalData.size() == 1) {
+        if (problem.additionalData?.size() == 1) {
             println "    additionalData == [ '${problem.additionalData.keySet().iterator().next()}' : '${problem.additionalData.values().iterator().next()}' ]"
-        } else if (problem.additionalData.size() > 1) {
+        } else if (problem.additionalData?.size() > 1) {
             println "    additionalData == ["
             problem.additionalData.each { key, value ->
                 println "        '$key' : '$value',"

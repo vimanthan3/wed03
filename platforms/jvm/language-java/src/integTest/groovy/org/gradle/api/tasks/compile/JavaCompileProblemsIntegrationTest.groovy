@@ -254,7 +254,7 @@ class JavaCompileProblemsIntegrationTest extends AbstractIntegrationSpec {
             fqid == 'compilation:java:java-compilation-error'
             details == 'warnings found and -Werror specified'
             solutions.empty
-            additionalData.isEmpty()
+            additionalData.asMap.isEmpty()
         }
         // The two expected warnings are still reported as warnings
         verifyAll(receivedProblem(1)) {
@@ -262,14 +262,14 @@ class JavaCompileProblemsIntegrationTest extends AbstractIntegrationSpec {
             fqid == 'compilation:java:java-compilation-warning'
             details == 'redundant cast to java.lang.String'
             solutions.empty
-            additionalData.isEmpty()
+            additionalData.asMap.isEmpty()
         }
         verifyAll(receivedProblem(2)) {
             assertProblem(it, "WARNING", true)
             fqid == 'compilation:java:java-compilation-warning'
             details == 'redundant cast to java.lang.String'
             solutions.empty
-            additionalData.isEmpty()
+            additionalData.asMap.isEmpty()
         }
     }
 

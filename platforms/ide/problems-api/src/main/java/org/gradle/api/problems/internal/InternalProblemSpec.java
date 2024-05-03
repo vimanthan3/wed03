@@ -16,6 +16,7 @@
 
 package org.gradle.api.problems.internal;
 
+import org.gradle.api.Action;
 import org.gradle.api.problems.ProblemGroup;
 import org.gradle.api.problems.ProblemSpec;
 import org.gradle.api.problems.Severity;
@@ -24,15 +25,9 @@ import javax.annotation.Nullable;
 
 public interface InternalProblemSpec extends ProblemSpec {
 
-    /**
-     * Specifies arbitrary data associated with this problem.
-     * <p>
-     * The only supported value type is {@link String}. Future Gradle versions may support additional types.
-     *
-     * @return this
-     * @throws RuntimeException for null values and for values with unsupported type.
-     */
-    InternalProblemSpec additionalData(String key, Object value);
+    // TODO (donat) javadoc. Expectation on serialization.
+
+    <T extends AdditionalData<U>, U extends AdditionalDataSpec> InternalProblemSpec additionalData(Class<? extends AdditionalData<U>> type, Action<? super U> config);
 
     /**
      * Declares that this problem was emitted by a task with the given path.
