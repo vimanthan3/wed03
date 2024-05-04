@@ -262,6 +262,7 @@ dependencies {
     integTestImplementation(project(":launcher"))
     integTestImplementation(project(":plugins"))
     integTestImplementation(project(":war"))
+    integTestImplementation(project(":daemon-services"))
     integTestImplementation(libs.jansi)
     integTestImplementation(libs.jetbrainsAnnotations)
     integTestImplementation(libs.jetty)
