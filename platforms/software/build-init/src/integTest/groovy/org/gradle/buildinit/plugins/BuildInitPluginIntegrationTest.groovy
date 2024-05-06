@@ -212,7 +212,7 @@ class BuildInitPluginIntegrationTest extends AbstractInitIntegrationSpec {
         pom()
 
         when:
-        succeeds('init', '--type', 'java-application', '--dsl', scriptDsl.id)
+        succeeds('init', '--type', 'java-application', '--dsl', scriptDsl.id, '--overwrite')
 
         then:
         pomValuesNotUsed(dslFixtureFor(scriptDsl))
@@ -326,6 +326,10 @@ class BuildInitPluginIntegrationTest extends AbstractInitIntegrationSpec {
                                   WARN
 
      --java-version     Provides java version to use in the project.
+
+     --overwrite     Allow existing files in the build directory to be overwritten?
+
+     --no-overwrite     Disables option --overwrite.
 
      --package     Set the package for source files.
 
@@ -441,7 +445,7 @@ Description""") // include the next header to make sure all options are listed
         executer.withArguments("--project-cache-dir", dotGradleDir.path)
 
         then:
-        succeeds "init"
+        succeeds "init", '--overwrite'
         targetDir.file("gradlew").assertIsFile()
         targetDir.file("settings.gradle.kts").assertIsFile()
         targetDir.file("build.gradle.kts").assertIsFile()
@@ -456,7 +460,7 @@ Description""") // include the next header to make sure all options are listed
         executer.withGradleUserHomeDir(dotGradleDir)
 
         then:
-        succeeds "init"
+        succeeds "init", '--overwrite'
         targetDir.file("gradlew").assertIsFile()
         targetDir.file("settings.gradle.kts").assertIsFile()
         targetDir.file("build.gradle.kts").assertIsFile()
