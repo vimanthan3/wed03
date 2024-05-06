@@ -68,6 +68,7 @@ dependencies {
     testImplementation(testFixtures(project(":core")))
     testImplementation(testFixtures(project(":platform-base")))
     testImplementation(testFixtures(project(":toolchains-jvm")))
+    testImplementation(testFixtures(project(":toolchains-jvm-shared")))
 
     testImplementation(libs.commonsIo)
     testImplementation(libs.nativePlatform) {
