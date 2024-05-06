@@ -45,9 +45,12 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -66,8 +69,30 @@ public abstract class ValidateAction implements WorkAction<ValidateAction.Params
 
     }
 
+    private static void dump(ClassLoader classLoader, String name) {
+        id(classLoader, name);
+        if (classLoader instanceof URLClassLoader) {
+            URL[] urls = ((URLClassLoader) classLoader).getURLs();
+            for (URL url : urls) {
+                System.out.println("  -> " + url);
+            }
+        }
+    }
+
+    private static void id(@Nullable ClassLoader classLoader, String name) {
+        if (classLoader == null) {
+            System.out.println("-> " + name + ": null");
+        } else {
+            System.out.println("-> " + name + ": " + classLoader + " (" + System.identityHashCode(classLoader) + ")");
+        }
+    }
+
     @Override
     public void execute() {
+        System.out.println("-> ValidateAction");
+        dump(getClass().getClassLoader(), "Classloader");
+        dump(Thread.currentThread().getContextClassLoader(), "Context Classloader");
+
         List<Problem> taskValidationProblems = new ArrayList<>();
 
         Params params = getParameters();
@@ -125,6 +150,7 @@ public abstract class ValidateAction implements WorkAction<ValidateAction.Params
             }
             List<String> classNames = getClassNames(fileDetails);
             for (String className : classNames) {
+                System.out.println("-> VISIT CLASS: " + className);
                 Class<?> clazz;
                 try {
                     clazz = classLoader.loadClass(className);
@@ -132,6 +158,7 @@ public abstract class ValidateAction implements WorkAction<ValidateAction.Params
                     LOGGER.debug("Could not load class: " + className, e);
                     continue;
                 }
+                id(clazz.getClassLoader(), "Loader for class");
                 collectValidationProblems(clazz, taskValidationProblems, params.getEnableStricterValidation().get());
             }
         }
