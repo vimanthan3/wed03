@@ -10,7 +10,6 @@ errorprone {
         "AnnotateFormatMethod", // 1 occurrences
         "EmptyBlockTag", // 3 occurrences
         "FormatString", // 1 occurrences
-        "GetClassOnEnum", // 4 occurrences
         "HidingField", // 1 occurrences
         "IdentityHashMapUsage", // 1 occurrences
         "ImmutableEnumChecker", // 1 occurrences
